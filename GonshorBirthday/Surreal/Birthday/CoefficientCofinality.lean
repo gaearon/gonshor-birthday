@@ -36,6 +36,29 @@ theorem exists_leftPrefixes_wpow_ge_real_mul {r : ℝ} (hr : 0 ≤ r)
     _ = ((r : Surreal) * (n : Surreal)) * ω^ v := (mul_assoc _ _ _).symm
     _ ≤ (m : Surreal) * ω^ v := mul_le_mul_of_nonneg_right hcoeff (wpow_nonneg v)
 
+/-- The sum of two left prefixes of a monomial is bounded by another left prefix. -/
+theorem exists_leftPrefix_wpow_ge_add {s a b : Surreal.{u}}
+    (ha : a ∈ leftPrefixes (ω^ s)) (hb : b ∈ leftPrefixes (ω^ s)) :
+    ∃ c ∈ leftPrefixes (ω^ s), a + b ≤ c := by
+  have hm : max a b ∈ leftPrefixes (ω^ s) := (max_choice a b).elim
+    (fun h ↦ h.symm ▸ ha) (fun h ↦ h.symm ▸ hb)
+  obtain ⟨c, hc, h⟩ := exists_leftPrefixes_wpow_ge_real_mul (r := 2) (by norm_num) hm
+  rw [show ((2 : ℝ) : Surreal.{u}) = 2 by norm_num, two_mul] at h
+  exact ⟨c, hc, (add_le_add (le_max_left a b) (le_max_right a b)).trans h⟩
+
+/-- The plus counts of monomial left prefixes suffice to bound a whole coefficient block. -/
+theorem oadd_wpow_plusCount_le_of_leftPrefixes (s : Surreal.{u}) (A B : NatOrdinal.{u})
+    (h : ∀ a ∈ leftPrefixes (ω^ s), NatOrdinal.of (A.val + (plusCount a).val) < B) :
+    NatOrdinal.of (A.val + (ω^ plusCount s).val) ≤ B := by
+  apply NatOrdinal.val.le_iff_le.mp
+  rw [NatOrdinal.val_of]
+  apply (Ordinal.add_le_iff (NatOrdinal.val.strictMono (NatOrdinal.wpow_pos _)).ne').mpr
+  intro d hd
+  have hd' : NatOrdinal.of d < plusCount (ω^ s) := by rwa [plusCount_wpow]
+  obtain ⟨a, ha, hda⟩ := exists_leftPrefixes_plusCount_ge hd'
+  exact (add_le_add_right (NatOrdinal.val.monotone hda) _).trans_lt
+    (NatOrdinal.val.strictMono (h a ha))
+
 private theorem realCast_inv_two_pow (n : ℕ) :
     Real.toSurreal ((2 : ℝ)⁻¹ ^ n) = (2 : Surreal.{u})⁻¹ ^ n := by
   induction n with

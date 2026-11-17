@@ -7,6 +7,7 @@ module
 
 public import GonshorBirthday.Surreal.Birthday.HeadRun
 
+import GonshorBirthday.Surreal.Birthday.CoefficientCofinality
 import GonshorBirthday.Surreal.Birthday.LastMinusFamily
 import GonshorBirthday.Surreal.Birthday.OmegaBlock
 
@@ -77,34 +78,16 @@ theorem appendMinuses_head_real_mul_wpow_of_cofinal_rightPrefixes
       (length_lower_monomial_lt hv n)
     have hc' := NatOrdinal.of.strictMono hc
     exact (lt_asymm hbn hc').elim
-  have hpc : plusCount s ≠ 0 := by
-    obtain ⟨v, hv, n, _⟩ := hf W.birthday (birthday_lt_of_mem_rightPrefixes hW)
-    intro hz
-    have hh := plusCount_lt_of_mem_leftPrefixes hv
-    rw [hz] at hh
-    exact (not_lt_of_ge (show 0 ≤ plusCount v from bot_le)) hh
-  have hWZ : W.birthday.val ≤ Z.birthday.val :=
-    NatOrdinal.val.monotone (birthday_lt_of_mem_rightPrefixes hW).le
-  have hLower : (ω^ (plusCount s)).val ≤ Z.birthday.val - W.birthday.val := by
-    have hpow : ω^ (plusCount s) ≤ NatOrdinal.of (Z.birthday.val - W.birthday.val) := by
-      apply (NatOrdinal.wpow_le_iff hpc).mpr
-      intro α hα n
-      obtain ⟨v, hv, hαv⟩ := exists_leftPrefixes_plusCount_ge hα
-      have hb := birthday_lt_of_mem_rightPrefixes (hStage v hv n).1
-      rw [(hStage v hv n).2.1] at hb
-      have hb' := NatOrdinal.val.strictMono hb
-      simp only [NatOrdinal.val_of] at hb'
-      have hlen : NatOrdinal.of ((ω^ (plusCount v)).val * (n : Ordinal)) ≤
-          NatOrdinal.of (Z.birthday.val - W.birthday.val) :=
-        NatOrdinal.of.monotone ((Ordinal.le_sub_of_le hWZ).mpr hb'.le)
-      rw [NatOrdinal.val_wpow, NatOrdinal.of_omega0_opow_mul_natCast,
-        NatOrdinal.of_val] at hlen
-      exact (mul_le_mul_of_nonneg_right (NatOrdinal.wpow_le_wpow.mpr hαv) bot_le).trans hlen
-    simpa only [NatOrdinal.val_of] using NatOrdinal.val.monotone hpow
   have hb : Z.birthday = NatOrdinal.of (W.birthday.val + (ω^ (plusCount s)).val) := by
-    apply le_antisymm hUpper
-    apply NatOrdinal.val.le_iff_le.mp
-    simpa only [NatOrdinal.val_of] using ((Ordinal.le_sub_of_le hWZ).mp hLower)
+    apply le_antisymm hUpper (oadd_wpow_plusCount_le_of_leftPrefixes s W.birthday Z.birthday ?_)
+    intro a ha
+    have hm : W - a ∈ rightPrefixes Z := by
+      simpa only [W, Z, add_sub_assoc] using
+        head_real_mul_wpow_sub_leftPrefix_mem_rightPrefixes K s hK hrt hpcoef ha
+    have hrun : appendMinuses W (plusCount a).val = W - a := appendMinuses_eq_sub_leftPrefix_wpow
+      (support_head_real_mul_wpow_subset K s hK t) (mem_support_head_real_mul_wpow K s hK ht) ha
+    rw [← hrun] at hm
+    simpa only [birthday_appendMinuses] using birthday_lt_of_mem_rightPrefixes hm
   have hL : leftPrefixes Z = leftPrefixes W := by
     apply Set.Subset.antisymm
     · intro p hp

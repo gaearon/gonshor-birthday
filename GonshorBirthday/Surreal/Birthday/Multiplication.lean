@@ -10,17 +10,15 @@ public import CombinatorialGames.Surreal.Birthday.Basic
 public import Mathlib.Algebra.Order.Ring.Abs
 
 import GonshorBirthday.Surreal.Birthday.CoefficientComparison
-import GonshorBirthday.Surreal.Birthday.CoefficientReplacement
-import GonshorBirthday.Surreal.Birthday.NormalFormReplacement
+import GonshorBirthday.Surreal.Birthday.ProductCoefficientCost
 import GonshorBirthday.Surreal.Birthday.ProductGrid
 
 /-!
 # The multiplication birthday bound
 
-The intrinsic birthday of a product of arbitrary surreal numbers is bounded by
-the natural product of their birthdays. Positive normal-form replacements bound
-every original product coefficient birthday. Whole-series coefficient comparison
-then transfers the ordered product-grid bound to the original inputs.
+In each exponent fibre a coefficient of greatest birthday majorizes the actual
+product coefficient. Its term fits the sum of that fibre's cell bounds. Whole-series
+coefficient comparison and the ordering of the grid give the intrinsic birthday bound.
 -/
 
 universe u
@@ -66,9 +64,8 @@ theorem birthday_intCast_mul_le (n : ℤ) (x : Surreal.{u}) :
 /-- **Gonshor's conjecture**: the birthday of a product of surreal numbers is at most the
 natural product of their birthdays. -/
 theorem birthday_mul_le (x y : Surreal) : (x * y).birthday ≤ x.birthday * y.birthday := by
-  obtain ⟨τ, hτpos, hτ⟩ := exists_pos_transcendental_real
-  exact (birthday_le_of_coeff_birthday_le
-    (birthday_coeff_mul_le_normalFormBirthdayReplacement hτpos hτ x y)).trans
-    (birthday_mul_normalFormBirthdayReplacement_le hτpos hτ x y)
+  obtain ⟨Z, hcoeff, hs, hf⟩ := exists_product_fibre_bound x y
+  exact (birthday_le_of_coeff_birthday_le hcoeff).trans
+    (birthday_le_of_product_fibre_costs x y Z hs hf)
 
 end Surreal

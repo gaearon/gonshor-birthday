@@ -18,6 +18,11 @@ public noncomputable section
 namespace Surreal
 open Set Order
 
+/-- A nonzero real contributes at least its first sign. -/
+theorem one_le_birthday_real {r : ℝ} (hr : r ≠ 0) : 1 ≤ (r : Surreal.{u}).birthday :=
+  NatOrdinal.one_le_iff_ne_zero.mpr fun h ↦
+    hr (Real.toSurreal_eq_zero_iff.mp (birthday_eq_zero.mp h))
+
 /-- Every real number is born by the first infinite birthday. -/
 theorem birthday_real_le_omega0 (r : ℝ) :
     (r : Surreal.{u}).birthday ≤ NatOrdinal.of Ordinal.omega0 := by

@@ -7,6 +7,7 @@ module
 
 public import GonshorBirthday.Surreal.Birthday.CoefficientWord
 
+import GonshorBirthday.Surreal.Birthday.HeadCoefficientWord
 import GonshorBirthday.Surreal.Birthday.Real
 
 /-!
@@ -47,20 +48,9 @@ theorem real_mul_wpow_birthdayTruncation_add_one_plus {r : ℝ} (hr : 0 < r)
     (hl : birthdayTruncation (r : Surreal.{u}) a < (r : Surreal.{u})) (x : Surreal.{u}) :
     birthdayTruncation (r : Surreal.{u}) (a + 1) * ω^ x =
       appendPluses (birthdayTruncation (r : Surreal.{u}) a * ω^ x) (ω^ plusCount x).val := by
-  have hab : a ≤ (r : Surreal.{u}).birthday := (le_add_of_nonneg_right (by simp)).trans ha
-  obtain ⟨s, hs, hsval, hsb⟩ := positive_real_prefix_data hr ha0 hab
-  obtain ⟨t, ht, htval, htb⟩ := positive_real_prefix_data hr
-    (ha0.trans_le (le_add_of_nonneg_right (by simp))) ha
-  have hp : birthdayTruncation (t : Surreal.{u}) (s : Surreal.{u}).birthday =
-      (s : Surreal.{u}) := by
-    rw [hsb, htval, hsval, birthdayTruncation_birthdayTruncation _ (by simp) ha]
-  have hb : (t : Surreal.{u}).birthday = (s : Surreal.{u}).birthday + 1 := by rw [htb, hsb]
-  have hst : s < t := by
-    apply Real.toSurreal_lt_iff.mp
-    rw [hsval, htval]
-    exact (lt_birthdayTruncation_iff ha (by rw [birthday_birthdayTruncation _ hab]; simp)).mpr hl
-  have h := real_mul_wpow_eq_appendPluses_of_coefficient_prefix hs ht hst hp hb x
-  rwa [hsval, htval] at h
+  have _ := hr
+  simpa only [zero_add] using
+    head_real_mul_wpow_birthdayTruncation_add_one_plus (0 : Surreal.{u}) x (by simp) r ha0 ha hl
 
 /-- A later minus coefficient sign becomes exactly one pure-power minus block. -/
 theorem real_mul_wpow_birthdayTruncation_add_one_minus {r : ℝ} (hr : 0 < r)
@@ -69,21 +59,9 @@ theorem real_mul_wpow_birthdayTruncation_add_one_minus {r : ℝ} (hr : 0 < r)
     (x : Surreal.{u}) :
     birthdayTruncation (r : Surreal.{u}) (a + 1) * ω^ x =
       appendMinuses (birthdayTruncation (r : Surreal.{u}) a * ω^ x) (ω^ plusCount x).val := by
-  have hab : a ≤ (r : Surreal.{u}).birthday := (le_add_of_nonneg_right (by simp)).trans ha
-  obtain ⟨s, hs, hsval, hsb⟩ := positive_real_prefix_data hr ha0 hab
-  obtain ⟨t, ht, htval, htb⟩ := positive_real_prefix_data hr
-    (ha0.trans_le (le_add_of_nonneg_right (by simp))) ha
-  have hp : birthdayTruncation (t : Surreal.{u}) (s : Surreal.{u}).birthday =
-      (s : Surreal.{u}) := by
-    rw [hsb, htval, hsval, birthdayTruncation_birthdayTruncation _ (by simp) ha]
-  have hb : (t : Surreal.{u}).birthday = (s : Surreal.{u}).birthday + 1 := by rw [htb, hsb]
-  have hts : t < s := by
-    apply Real.toSurreal_lt_iff.mp
-    rw [hsval, htval]
-    exact (birthdayTruncation_lt_iff ha
-      (by rw [birthday_birthdayTruncation _ hab]; simp)).mpr hl
-  have h := real_mul_wpow_eq_appendMinuses_of_coefficient_prefix hs ht hts hp hb x
-  rwa [hsval, htval] at h
+  have _ := hr
+  simpa only [zero_add] using
+    head_real_mul_wpow_birthdayTruncation_add_one_minus (0 : Surreal.{u}) x (by simp) r ha0 ha hl
 
 /-- Every stage of a plus coefficient block is the corresponding actual product prefix. -/
 theorem birthdayTruncation_real_mul_wpow_plus_block {r : ℝ} (hr : 0 < r)
