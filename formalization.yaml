@@ -1,0 +1,94 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/mathlib-initiative/formalization.yaml/main/schema/formalization.schema.json
+version: "v0.4"
+
+project:
+  name: "Gonshor's birthday conjecture"
+  description: >-
+    A Lean proof that the birthday of the product of two surreal numbers is at most
+    the natural (Hessenberg) product of their birthdays. The proof uses the surreal
+    numbers and birthday defined in CombinatorialGames. The Mathlib-only Challenge
+    gives an equivalent formulation using numeric Conway games.
+  authors: ["Dan Abramov"]
+  responsible_maintainers: ["Dan Abramov"]
+  license: "Apache-2.0"
+
+classification:
+  arxiv: ["math.LO", "math.RA"]
+  msc2020: ["03E10", "06A05", "12J15"]
+
+sources:
+  - title: "An Introduction to the Theory of Surreal Numbers"
+    authors: ["Harry Gonshor"]
+    id: "https://doi.org/10.1017/CBO9780511629143"
+    type: "book"
+    location: "LMS Lecture Note Series 110, Cambridge University Press, 1986; Chapter 6, p. 96"
+    relationship: "formalizes"
+    note: "States the multiplication birthday conjecture. Chapters 5–7 give the sign-sequence and normal-form background."
+  - title: "Fields of surreal numbers and exponentiation"
+    authors: ["Lou van den Dries", "Philip Ehrlich"]
+    id: "https://www.impan.pl/shop/en/publication/transaction/download/product/89226"
+    type: "paper"
+    location: "Fundamenta Mathematicae 167 (2001), 173–188; Section 3"
+    relationship: "background"
+    note: "Birthday estimates for real coefficients and bounds on the number of plus signs."
+  - title: "Arithmetic of ordinals with applications to the theory of ordered Abelian groups"
+    authors: ["Philip W. Carruth"]
+    id: "https://doi.org/10.1090/S0002-9904-1942-07649-X"
+    type: "paper"
+    location: "Bulletin of the AMS 48 (1942), 262–271; Theorems 1–2"
+    relationship: "background"
+    note: "Characterizes natural ordinal operations through shuffles and product orders."
+  - title: "CombinatorialGames"
+    authors: ["Violeta Hernández Palacios", "CombinatorialGames contributors"]
+    id: "https://github.com/vihdzp/combinatorial-games"
+    type: "other"
+    location: "Revision ecb008ed1eef7928eed7150f1597b0f635d2253a"
+    relationship: "background"
+    note: "Provides the surreal numbers, arithmetic, and birthday used by the proof."
+  - title: "Conway Refinement"
+    authors: ["Dan Abramov", "Conway Refinement contributors"]
+    id: "https://github.com/gaearon/conway-refinement"
+    type: "other"
+    relationship: "background"
+    note: "Reused normal-form infrastructure and the game definitions for the Mathlib-only statement."
+
+status:
+  scope: >-
+    All pairs of surreal numbers in any Lean universe, including zero, either sign,
+    and arbitrary set-sized supports. The product of birthdays is natural ordinal multiplication.
+  sorry_count: 0
+  sorry_in_definitions: 0
+  axioms: ["propext", "Classical.choice", "Quot.sound"]
+  main_results: ["The multiplication birthday bound for surreal numbers"]
+  note: "Counts exclude the advertised proof hole in Challenge.lean."
+
+automation:
+  methods:
+    - method: "agent"
+      models: ["OpenAI Codex", "gpt-6.1-sol", "gpt-6-astra"]
+      framework: "Codex and Lean 4"
+      tool_setup: >-
+        AI agents developed the mathematical argument, Lean proofs, and repository,
+        and reviewed the work. Lean and independent kernel checkers verified the proof.
+        Costs and complete model-call records were not collected.
+      prompting_notes: >-
+        Dan Abramov chose the problem, directed the research, and required a proof of
+        the original statement with standard axioms and a Mathlib-only submission statement.
+
+fidelity:
+  divergences: >-
+    The Challenge uses numeric game representatives. Birthday is the least rank of
+    an equivalent numeric game. Lean proves that this formulation is equivalent to
+    the unrestricted theorem for CombinatorialGames' surreal numbers.
+
+review:
+  status: "Agent-reviewed and kernel-checked; no specialist peer review."
+  notes: "PROOF.md outlines the argument. Novelty and priority have not been established."
+
+alignment:
+  namespace: "GonshorBirthday.Palomar"
+  statements:
+    - source: "Gonshor (1986), Chapter 6, p. 96"
+      lean: "GonshorBirthday.Palomar.birthday_mul_le"
+      module: "Challenge"
+      status: "proved"

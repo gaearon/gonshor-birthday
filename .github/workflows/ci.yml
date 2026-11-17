@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned toolchain and hydrate Mathlib
+        uses: leanprover/lean-action@38fbc41a8c28c4cbaec22d7f7de508ec2e7c0dd9
+        with:
+          auto-config: false
+          build: false
+          use-github-cache: false
+          use-mathlib-cache: true
+      - name: Restore build artifacts
+        id: restore-build
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            .lake/build
+            .lake/packages/CombinatorialGames/.lake/build
+          key: lake-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lakefile.toml', 'lake-manifest.json') }}-${{ github.sha }}
+          restore-keys: |
+            lake-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lakefile.toml', 'lake-manifest.json') }}-
+      - name: Check Palomar statement drift
+        run: scripts/check-palomar-challenge.sh
+      - name: Build every module
+        run: lake build --iofail
+      - name: Save build artifacts
+        if: steps.restore-build.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            .lake/build
+            .lake/packages/CombinatorialGames/.lake/build
+          key: lake-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lakefile.toml', 'lake-manifest.json') }}-${{ github.sha }}
+      - name: Compare Palomar statements
+        run: lake exe palomar-compatibility
+      - name: Audit axioms
+        run: lake exe axioms
+      - name: Check that audits reject bad fixtures
+        run: scripts/audit-probes.sh

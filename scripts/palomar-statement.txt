@@ -1,0 +1,4 @@
+/-- The birthday of a product is bounded by the natural product of its birthdays. -/
+theorem birthday_mul_le (x y : Inline.Surreal.{u}) :
+    Inline.Game.birthday (Inline.Game.mul x.game y.game) ≤
+      Inline.naturalMul (Inline.Game.birthday x.game) (Inline.Game.birthday y.game)

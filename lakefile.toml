@@ -1,0 +1,49 @@
+name = "GonshorBirthday"
+version = "0.1.0"
+defaultTargets = [
+  "GonshorBirthday",
+  "Challenge",
+  "Solution",
+  "palomar-compatibility",
+  "axioms",
+]
+
+[leanOptions]
+autoImplicit = false
+relaxedAutoImplicit = false
+weak.linter.mathlibStandardSet = true
+warningAsError = true
+
+[[require]]
+name = "CombinatorialGames"
+git = "https://github.com/vihdzp/combinatorial-games.git"
+rev = "ecb008ed1eef7928eed7150f1597b0f635d2253a"
+
+[[require]]
+name = "mathlib"
+scope = "leanprover-community"
+git = "https://github.com/leanprover-community/mathlib4.git"
+rev = "4cf60f1d6ade733526e1322acd03a057c662d204"
+
+# Build every source module directly, including modules with no importers.
+# The root module has no re-exports; audits enumerate the same source tree.
+[[lean_lib]]
+name = "GonshorBirthday"
+globs = ["GonshorBirthday.*"]
+
+# Palomar compiles the statement and its proof separately.
+[[lean_lib]]
+name = "Challenge"
+roots = ["Challenge"]
+
+[[lean_lib]]
+name = "Solution"
+roots = ["Solution"]
+
+[[lean_exe]]
+name = "palomar-compatibility"
+root = "scripts.PalomarCompatibility"
+
+[[lean_exe]]
+name = "axioms"
+root = "scripts.Axioms"
