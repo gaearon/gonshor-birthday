@@ -85,7 +85,9 @@ private theorem type_sigma_unique {I : Type u} [LinearOrder I] [WellFoundedLT I]
         simp [Sigma.lex_iff] }
   exact e.toRelIsoLT.ordinalType_congr.symm.trans (Ordinal.type_toType _)
 
-/-- The expanded ordinal length of selected original sign positions, with the initial plus. -/
+/-- The ordinal sum `1 + ∑ i ∈ S, ω^ (p i + 1)` over a set `S` of sign positions of `x`, in
+increasing order, where `p i` is the number of plus signs before position `i`. For `S = univ`
+this is the birthday of `ω^ x`. -/
 def omegaExpansionLength (x : Surreal.{u}) (S : Set x.birthday.val.ToType) : NatOrdinal.{u} :=
   NatOrdinal.of (1 + typeLT (Σₗ i : S,
     (ω^ (plusCount (birthdayTruncation x (NatOrdinal.of i.1.toOrd.1)) + 1)).val.ToType))
@@ -129,7 +131,8 @@ theorem omegaExpansionLength_mono (x : Surreal.{u}) : Monotone (omegaExpansionLe
     | right a b h => exact Sigma.Lex.right _ _ h
   exact (RelEmbedding.ofMonotone f hf).ordinal_type_le
 
-/-- Original exponent positions retained by the cutoff, including every plus position. -/
+/-- The sign positions of `x` retained by the cutoff `C`: every plus, and each minus whose
+right prefix is at most `C`. -/
 def reducedOmegaPositions (C x : Surreal.{u}) : Set x.birthday.val.ToType :=
   {i | birthdayTruncation x (NatOrdinal.of i.toOrd.1) < x ∨
     birthdayTruncation x (NatOrdinal.of i.toOrd.1) ≤ C}
@@ -140,7 +143,8 @@ theorem mem_reducedOmegaPositions {C x : Surreal.{u}} {i : x.birthday.val.ToType
   unfold reducedOmegaPositions
   rfl
 
-/-- Retain every plus and precisely the minuses whose canonical prefix is at most the cutoff. -/
+/-- The expansion length of `x` over the sign positions retained by the cutoff `C`. See
+`reducedOmegaPositions`. -/
 def reducedOmegaCost (C x : Surreal.{u}) : NatOrdinal.{u} :=
   omegaExpansionLength x (reducedOmegaPositions C x)
 

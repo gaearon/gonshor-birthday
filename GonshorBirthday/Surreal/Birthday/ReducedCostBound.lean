@@ -97,7 +97,8 @@ theorem not_pure_common_margin_failure (a b d : Surreal.{u}) (hd : 0 < d)
       (by simpa only [add_comm] using heshape) (by simpa only [add_comm] using hsharp)
       hbaseB hcb ⟨w, hw, hwC⟩ hdeleted
 
-/-- Reduced omega costs are submultiplicative under addition with every positive common margin. -/
+/-- The reduced cost of a sum, with cutoff a positive margin `d` above it, is at most the
+natural product of the reduced costs of the summands with the same margin. -/
 theorem reducedOmegaCost_add_common_margin_le (a b d : Surreal.{u}) (hd : 0 < d) :
     reducedOmegaCost (a + b + d) (a + b) ≤
       reducedOmegaCost (a + d) a * reducedOmegaCost (b + d) b := by
@@ -120,7 +121,8 @@ theorem reducedOmegaCost_add_common_margin_le (a b d : Surreal.{u}) (hd : 0 < d)
       exact not_pure_common_margin_failure a b d' hd' ih' hA hB hfail
   exact aux _ a b rfl d hd
 
-/-- The reduced cost of a sum fits the product of the two admissible input cutoff costs. -/
+/-- The reduced cost of `a + b` with cutoff `min (A + b) (a + B)` is at most the natural
+product of the reduced costs of `a` with cutoff `A` and of `b` with cutoff `B`. -/
 theorem reducedOmegaCost_add_le (a b A B : Surreal.{u}) (ha : a ≤ A) (hb : b ≤ B) :
     reducedOmegaCost (min (A + b) (a + B)) (a + b) ≤
       reducedOmegaCost A a * reducedOmegaCost B b :=

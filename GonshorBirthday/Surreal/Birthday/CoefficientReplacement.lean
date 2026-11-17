@@ -49,7 +49,7 @@ private def birthdayReplacementPolynomial (r : ℝ) : ℚ[X] :=
   if h : r ∈ Set.range (fun q : Dyadic ↦ (q.toRat : ℝ)) then
     C (h.choose.birthday : ℚ) else X
 
-/-- Replace each dyadic by its finite birthday and every nondyadic coefficient by `τ`. -/
+/-- Replace a dyadic real by its birthday, a natural number, and any other real by `τ`. -/
 def birthdayReplacement (τ r : ℝ) : ℝ :=
   aeval τ (birthdayReplacementPolynomial r)
 

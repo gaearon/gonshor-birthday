@@ -175,7 +175,9 @@ theorem exists_orderIso_normalForm_birthday (x : Surreal.{u}) :
   rw [OrderIso.symm_apply_apply]
   rfl
 
-/-- The birthday of an arbitrary normal form is the ordered sum of its native term costs. -/
+/-- The birthday of a surreal is the ordered sum, over the terms of its Conway normal form in
+order of decreasing exponent, of the `headCoefficientCost` of each term after the preceding
+terms. -/
 theorem birthday_eq_ordered_term_costs (x : Surreal.{u}) :
     x.birthday = NatOrdinal.of (typeLT (Σₗ i : x.toHahnSeries.length.ToType,
       (headCoefficientCost (x.normalFormTrunc (x.toHahnSeries.exp i.toOrd))

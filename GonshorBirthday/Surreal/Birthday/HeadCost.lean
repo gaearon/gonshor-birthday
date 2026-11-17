@@ -22,7 +22,9 @@ public noncomputable section
 namespace Surreal
 open Set
 
-/-- Original exponent signs retained by a normal-form head, including every plus. -/
+/-- The sign positions of the exponent `s` that are retained in `H + ω^ s`. Every plus is
+retained. A minus whose right prefix is `w` is retained if and only if every exponent of `H` is
+at least `w` and the coefficient of `ω^ w` in `H` has finite birthday, that is, is dyadic. -/
 def headOmegaPositions (H s : Surreal.{u}) : Set s.birthday.val.ToType :=
   {i | birthdayTruncation s (NatOrdinal.of i.toOrd.1) < s ∨
     (H.support ⊆ Ici (birthdayTruncation s (NatOrdinal.of i.toOrd.1)) ∧
@@ -39,7 +41,8 @@ theorem mem_headOmegaPositions (H s : Surreal.{u}) (i : s.birthday.val.ToType) :
   rw [headOmegaPositions]
   rfl
 
-/-- The expanded ordinal length of the original exponent signs retained by a head. -/
+/-- The length that the monomial `ω^ s` adds to the sign sequence of `H`: the expansion length
+of `s` over the positions retained by `H`. See `headOmegaPositions`. -/
 def headOmegaCost (H s : Surreal.{u}) : NatOrdinal.{u} :=
   omegaExpansionLength s (headOmegaPositions H s)
 

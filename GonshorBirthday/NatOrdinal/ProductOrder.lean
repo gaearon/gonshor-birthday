@@ -167,7 +167,8 @@ private theorem gridBound (a b : NatOrdinal.{u}) : GridBound a b := by
           (ih a₁ b ha₁.le le_rfl (Or.inl ha₁))
   exact aux (a + b) a b rfl
 
-/-- A well order compatible with coordinatewise comparison has type at most the natural product. -/
+/-- A well order compatible with coordinatewise comparison has type at most the natural product.
+This is a form of Carruth's theorem on the maximal order type of a product. -/
 theorem of_type_le_mul_of_coordinates {γ : Type u} [LinearOrder γ] [WellFoundedLT γ]
     (a b : NatOrdinal.{u}) (p q : γ → NatOrdinal.{u})
     (hp : ∀ x, p x < a) (hq : ∀ x, q x < b)

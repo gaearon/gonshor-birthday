@@ -26,7 +26,7 @@ universe u
 public noncomputable section
 namespace Surreal
 
-/-- Apply the same real birthday replacement to every Conway normal-form coefficient. -/
+/-- Apply `birthdayReplacement τ` to every coefficient of the Conway normal form of `x`. -/
 def normalFormBirthdayReplacement (τ : ℝ) (x : Surreal.{u}) : Surreal.{u} :=
   let f : Surreal.{u} → ℝ := fun s ↦ birthdayReplacement τ (x.coeff s)
   have hf : Function.support f ⊆ x.support := by

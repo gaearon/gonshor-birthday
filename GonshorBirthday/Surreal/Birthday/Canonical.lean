@@ -18,11 +18,13 @@ public noncomputable section
 namespace Surreal
 open Set
 
-/-- The canonical left prefixes of a surreal number. -/
+/-- The proper initial segments of the sign sequence of `x` that are less than `x`. These are
+the prefixes ending just before a plus sign. -/
 def leftPrefixes (x : Surreal.{u}) : Set Surreal.{u} :=
   {z | ∃ a < x.birthday, birthdayTruncation x a = z ∧ z < x}
 
-/-- The canonical right prefixes of a surreal number. -/
+/-- The proper initial segments of the sign sequence of `x` that are greater than `x`. These
+are the prefixes ending just before a minus sign. -/
 def rightPrefixes (x : Surreal.{u}) : Set Surreal.{u} :=
   {z | ∃ a < x.birthday, birthdayTruncation x a = z ∧ x < z}
 

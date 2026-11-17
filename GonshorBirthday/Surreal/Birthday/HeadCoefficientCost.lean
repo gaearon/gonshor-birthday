@@ -26,7 +26,8 @@ open scoped Ordinal
 public noncomputable section
 namespace Surreal
 
-/-- The reduced monomial cost followed by its original real-coefficient tail. -/
+/-- The length that the term `r * ω^ s` adds to the sign sequence of `H`. It is `0` if `r = 0`,
+and otherwise the ordinal sum of `headOmegaCost H s` and `ω^ plusCount s * (birthday r - 1)`. -/
 def headCoefficientCost (H s : Surreal.{u}) (r : ℝ) : NatOrdinal.{u} :=
   if r = 0 then 0 else NatOrdinal.of
     ((headOmegaCost H s).val + (ω^ plusCount s).val * ((r : Surreal.{u}).birthday.val - 1))

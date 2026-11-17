@@ -179,7 +179,8 @@ theorem birthday_trunc_add_wpow_le_of_coeff_birthday_le {x y : Surreal.{u}}
     birthday_head_wpow _ _ (by rw [support_trunc]; exact inter_subset_right)]
   exact NatOrdinal.of.monotone (body_birthday_le_of_coeff_birthday_le hcoeff s hs)
 
-/-- Arbitrary coefficient birthday decreases cannot increase the surreal birthday. -/
+/-- If each normal-form coefficient of `y` has birthday at most that of the corresponding
+coefficient of `x`, then the birthday of `y` is at most that of `x`. -/
 theorem birthday_le_of_coeff_birthday_le {x y : Surreal.{u}}
     (hcoeff : ∀ s, (y.coeff s : Surreal.{u}).birthday ≤ (x.coeff s : Surreal.{u}).birthday) :
     y.birthday ≤ x.birthday := by

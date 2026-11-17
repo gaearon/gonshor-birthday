@@ -134,7 +134,8 @@ theorem exists_leftPrefixes_natCast_mul_ge (x : Surreal.{u}) (n : ℕ)
           rw [Nat.cast_add, Nat.cast_one, add_mul, one_mul, add_right_comm]
     · exact ⟨a, ha, hza⟩
 
-/-- The plus count of a sum is bounded by the natural sum of the plus counts. -/
+/-- The plus count of a sum is at most the natural sum of the plus counts. See van den Dries
+and Ehrlich, *Fields of surreal numbers and exponentiation*, Lemma 3.4(1). -/
 theorem plusCount_add_le (x y : Surreal.{u}) :
     plusCount (x + y) ≤ plusCount x + plusCount y := by
   have aux : ∀ b : NatOrdinal.{u}, ∀ x y : Surreal.{u}, x.birthday + y.birthday = b →

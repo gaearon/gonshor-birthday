@@ -40,7 +40,8 @@ private theorem normalFormIndexEquiv_strictAnti (x : Surreal.{u}) :
   intro i j hij
   exact x.toHahnSeries.exp_strictAnti (Ordinal.ToType.mk.symm.strictMono hij)
 
-/-- Positive replacement products fit the natural product of the original whole birthdays. -/
+/-- The birthday of the product of the replaced series is at most the natural product of the
+birthdays of the original surreals. -/
 theorem birthday_mul_normalFormBirthdayReplacement_le {τ : ℝ}
     (hτpos : 0 < τ) (hτ : Transcendental ℚ τ) (x y : Surreal.{u}) :
     (normalFormBirthdayReplacement τ x * normalFormBirthdayReplacement τ y).birthday ≤

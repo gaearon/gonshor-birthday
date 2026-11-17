@@ -20,7 +20,8 @@ public noncomputable section
 namespace Surreal
 open Set Order
 
-/-- The omega-map birthday equals the complete canonical sign-block expansion length. -/
+/-- The birthday of `ω^ x` is the expansion length of `x` over all of its sign positions. See
+Gonshor, *An Introduction to the Theory of Surreal Numbers*, Theorem 5.11. -/
 theorem birthday_wpow_eq_omegaExpansionLength (x : Surreal.{u}) :
     (ω^ x).birthday = omegaExpansionLength x Set.univ := by
   have aux : ∀ a : Ordinal.{u}, NatOrdinal.of a ≤ x.birthday →

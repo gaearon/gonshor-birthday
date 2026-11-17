@@ -28,8 +28,9 @@ instance small_setOfPred_birthday_lt_and_gt (x : Surreal.{u}) (a : NatOrdinal.{u
     Small.{u} {z : Surreal | z.birthday < a ∧ x < z} :=
   small_subset (s := {z : Surreal | z.birthday < a}) (fun _ hz ↦ hz.1)
 
-/-- The simplest surreal with the same comparisons as `x` against every number younger than `a`.
--/
+/-- The initial segment of length `a` of the sign sequence of `x`, or `x` itself if `a` is at
+least its birthday. It is defined as the simplest surreal lying on the same side as `x` of every
+number born before day `a`. -/
 def birthdayTruncation (x : Surreal.{u}) (a : NatOrdinal.{u}) : Surreal.{u} :=
   !{{z | z.birthday < a ∧ z < x} | {z | z.birthday < a ∧ x < z}}'
     (fun _ hz _ hw ↦ hz.2.trans hw.2)

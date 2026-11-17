@@ -33,7 +33,9 @@ theorem birthday_dyadic_mul_le (x y : Dyadic) :
     ← Nat.cast_mul, Nat.cast_le]
   exact Dyadic.birthday_mul_le x y
 
-/-- Embedded real numbers satisfy the intrinsic birthday product bound. -/
+/-- The birthday of a product of real numbers is at most the natural product of their
+birthdays. See van den Dries and Ehrlich, *Fields of surreal numbers and exponentiation*,
+Lemma 3.3. -/
 theorem birthday_real_mul_le (r t : ℝ) :
     ((r : Surreal.{u}) * (t : Surreal)).birthday ≤
       (r : Surreal).birthday * (t : Surreal).birthday := by

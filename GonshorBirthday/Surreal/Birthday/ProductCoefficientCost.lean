@@ -42,7 +42,9 @@ theorem headCoefficientCost_mul_replacement_le {τ : ℝ}
     ((normalFormBirthdayReplacement τ y).coeff b)
   simpa only [headCoefficientCost_trunc_normalFormBirthdayReplacement hτpos hτ] using h
 
-/-- Every actual product coefficient fibre fits any ordered enumeration of its cell budgets. -/
+/-- The term at exponent `s` of a product of replaced series costs at most the ordered sum,
+over any enumeration of the pairs of exponents with sum `s`, of the natural products of the two
+input term costs. -/
 theorem headCoefficientCost_mul_replacement_fibre_le {τ : ℝ}
     (hτpos : 0 < τ) (hτ : Transcendental ℚ τ) (x y s : Surreal.{u}) {n : ℕ}
     (e : Fin n ≃ (SurrealHahnSeries.supportAntidiagonal x.toHahnSeries y.toHahnSeries s)) :

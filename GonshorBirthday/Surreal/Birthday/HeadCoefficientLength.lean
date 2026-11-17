@@ -24,7 +24,8 @@ public noncomputable section
 namespace Surreal
 open Set
 
-/-- A lower real-coefficient term adds exactly its native cost to the head birthday. -/
+/-- If every exponent of `H` is greater than `s`, then the birthday of `H + r * ω^ s` is the
+ordinal sum of the birthday of `H` and `headCoefficientCost H s r`. -/
 theorem birthday_head_real_mul_wpow_eq_headCoefficientCost
     (H s : Surreal.{u}) (hH : H.support ⊆ Ioi s) (r : ℝ) :
     (H + (r : Surreal) * ω^ s).birthday =

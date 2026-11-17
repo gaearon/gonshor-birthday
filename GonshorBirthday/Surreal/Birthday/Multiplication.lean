@@ -63,7 +63,8 @@ theorem birthday_intCast_mul_le (n : ℤ) (x : Surreal.{u}) :
   | nat n => simpa using birthday_natCast_mul_le n x
   | neg ih n => simpa using ih n
 
-/-- A surreal product's birthday is at most the natural product of its input birthdays. -/
+/-- **Gonshor's conjecture**: the birthday of a product of surreal numbers is at most the
+natural product of their birthdays. -/
 theorem birthday_mul_le (x y : Surreal) : (x * y).birthday ≤ x.birthday * y.birthday := by
   obtain ⟨τ, hτpos, hτ⟩ := exists_pos_transcendental_real
   exact (birthday_le_of_coeff_birthday_le

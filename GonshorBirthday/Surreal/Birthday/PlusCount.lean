@@ -24,7 +24,8 @@ public noncomputable section
 namespace Surreal
 open Ordinal
 
-/-- The ordinal number of plus positions in the canonical sign expansion. -/
+/-- The number of plus signs in the sign sequence of `x`, as an ordinal: the order type of the
+positions `i` whose prefix `birthdayTruncation x i` is less than `x`. -/
 def plusCount (x : Surreal.{u}) : NatOrdinal.{u} :=
   NatOrdinal.of (typeLT {i : x.birthday.val.ToType |
     birthdayTruncation x (NatOrdinal.of i.toOrd.1) < x})
