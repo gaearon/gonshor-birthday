@@ -14,8 +14,8 @@ import GonshorBirthday.Surreal.HahnSeries.NormalFormAdd
 
 The products of one minus reciprocal omega and one plus reciprocal omega have
 exactly two contributing cells at exponent minus one. Their original coefficients
-cancel there. The same actual two-cell fibre supplies the replacement product's
-full coefficient cost.
+cancel there. The comparison series retains that exponent, and the same two cells
+bound the replacement product's coefficient cost.
 -/
 
 universe u
@@ -23,6 +23,35 @@ public noncomputable section
 namespace Tests
 open Surreal Set
 open scoped Ordinal
+
+private theorem opposite_two_term_cancel :
+    (((1 - ω^ (-1 : Surreal.{u})) * (1 + ω^ (-1 : Surreal))).coeff (-1)) = 0 := by
+  let t := ω^ (-1 : Surreal.{u})
+  change ((1 - t) * (1 + t)).coeff (-1) = 0
+  rw [show (1 - t) * (1 + t) = 1 - t * t by ring]
+  dsimp only [t]
+  rw [← wpow_add]
+  simp only [sub_eq_add_neg, coeff_add, coeff_neg, coeff_one, coeff_wpow, Pi.add_apply,
+    Pi.neg_apply, Pi.single_apply]
+  norm_num
+
+/-- The finite-fibre comparison retains an exponent whose actual product coefficient cancels. -/
+theorem cancelled_exponent_in_product_fibre_bound :
+    let x : Surreal.{u} := 1 - ω^ (-1 : Surreal)
+    let y : Surreal.{u} := 1 + ω^ (-1 : Surreal)
+    (x * y).coeff (-1) = 0 ∧ ∃ Z : Surreal.{u}, (-1 : Surreal) ∈ Z.support ∧
+      ∀ s, ((x * y).coeff s : Surreal.{u}).birthday ≤ (Z.coeff s : Surreal.{u}).birthday := by
+  intro x y
+  obtain ⟨Z, hcoeff, hs, _⟩ := exists_product_fibre_bound x y
+  refine ⟨opposite_two_term_cancel, Z, ?_, hcoeff⟩
+  have hx : 0 ∈ x.support := by
+    simp only [mem_support_iff, x, sub_eq_add_neg, coeff_add, coeff_neg, coeff_one, coeff_wpow,
+      Pi.add_apply, Pi.neg_apply]
+    norm_num
+  have hy : -1 ∈ y.support := by
+    simp only [mem_support_iff, y, coeff_add, coeff_one, coeff_wpow, Pi.add_apply]
+    norm_num
+  simpa only [zero_add] using hs 0 hx (-1) hy
 
 /-- A genuinely cancelled two-cell fibre supplies the replacement coefficient budget. -/
 theorem opposite_two_term_product_fibre {τ : ℝ}
@@ -63,10 +92,7 @@ theorem opposite_two_term_product_fibre {τ : ℝ}
     rw [Fintype.card_coe, hanti]
     norm_num
   let e := (Fintype.equivFinOfCardEq hc).symm
-  refine ⟨e, headCoefficientCost_mul_replacement_fibre_le hτpos hτ x y (-1) e, ?_⟩
-  rw [coeff_mul, hanti]
-  simp only [sub_eq_add_neg, coeff_add, coeff_neg, coeff_one, coeff_wpow,
-    Pi.add_apply, Pi.neg_apply]
-  norm_num
+  exact ⟨e, headCoefficientCost_mul_replacement_fibre_le hτpos hτ x y (-1) e,
+    opposite_two_term_cancel⟩
 
 end Tests

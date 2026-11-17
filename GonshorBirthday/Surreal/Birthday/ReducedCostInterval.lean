@@ -8,6 +8,7 @@ module
 public import GonshorBirthday.Surreal.Birthday.HeadRun
 public import GonshorBirthday.Surreal.Birthday.ReducedCostEquality
 
+import GonshorBirthday.Surreal.Birthday.CoefficientCofinality
 import GonshorBirthday.Surreal.Birthday.LastMinusFamily
 import GonshorBirthday.Surreal.Birthday.OmegaBlock
 import GonshorBirthday.Surreal.Birthday.CoefficientBlock
@@ -75,37 +76,24 @@ theorem wpow_plusCount_le_plus_interval_of_gap_window
   · simp only [hq, NatOrdinal.wpow_zero, NatOrdinal.val_one]
     simpa only [zero_add] using Order.add_one_le_iff.mpr hρpos
   by_contra hn
-  obtain ⟨u, hu, n, hρn⟩ := exists_leftPrefix_monomial_length_gt hq (lt_of_not_ge hn)
-  have hrun : appendPluses (K + (r : Surreal) * ω^ s) ρ ≤
-      K + (r : Surreal) * ω^ s + (n : Surreal) * ω^ u := by
-    rw [← appendPluses_head_real_mul_wpow K s hK hr hu n]
-    exact (strictMono_appendPluses _).monotone hρn.le
+  have hρ : NatOrdinal.of ρ < plusCount (ω^ s) := by
+    rw [plusCount_wpow]
+    exact NatOrdinal.of.strictMono (lt_of_not_ge hn)
+  obtain ⟨a, ha, hρa⟩ := exists_leftPrefixes_plusCount_ge hρ
+  have hrun : appendPluses (K + (r : Surreal) * ω^ s) ρ ≤ K + (r : Surreal) * ω^ s + a := by
+    rw [← appendPluses_eq_add_leftPrefix_wpow (support_head_real_mul_wpow_subset K s hK r)
+      (mem_support_head_real_mul_wpow K s hK hr) ha]
+    exact (strictMono_appendPluses _).monotone (NatOrdinal.val.monotone hρa)
+  have ht : (t : Surreal.{u}) ∈ rightPrefixes (r : Surreal) := by
+    rw [hsrc]
+    exact mem_rightPrefixes_iff.mpr ⟨birthdayTruncation_appendMinus _, appendMinus_lt _⟩
   obtain ⟨w, hw, hwC⟩ := hne
-  have hrs : r < t := Real.toSurreal_lt_iff.mp (by rw [hsrc]; exact appendMinus_lt _)
-  have hp : birthdayTruncation (r : Surreal.{u}) (t : Surreal).birthday = t := by
-    rw [hsrc]; exact birthdayTruncation_appendMinus _
-  rcases exists_head_real_mul_wpow_sub_natCast_mul_wpow_le K s hK hsrc hw with
-      hbase | ⟨v, hv, m, hm⟩
-  · have hnew := head_real_mul_wpow_sub_leftPrefix_mem_rightPrefixes K s hK hrs hp
-      (natCast_mul_wpow_mem_leftPrefixes hu n)
-    have hd := hdel _ hnew
-    linarith only [hd, hbase, hwC, hrun]
-  · let v' := max u v
-    have hv' : v' ∈ leftPrefixes s := by
-      rcases le_total u v with huv | hvu
-      · simpa only [v', max_eq_right huv] using hv
-      · simpa only [v', max_eq_left hvu] using hu
-    have hun : (n : Surreal) * ω^ u ≤ (n : Surreal) * ω^ v' :=
-      mul_le_mul_of_nonneg_left (wpow_le_wpow.mpr (le_max_left u v)) (Nat.cast_nonneg n)
-    have hvm : (m : Surreal) * ω^ v ≤ (m : Surreal) * ω^ v' :=
-      mul_le_mul_of_nonneg_left (wpow_le_wpow.mpr (le_max_right u v)) (Nat.cast_nonneg m)
-    have hsum : (n : Surreal) * ω^ u + (m : Surreal) * ω^ v ≤
-        ((n + m : ℕ) : Surreal) * ω^ v' := by
-      simpa only [Nat.cast_add, add_mul] using add_le_add hun hvm
-    have hnew := head_real_mul_wpow_sub_leftPrefix_mem_rightPrefixes K s hK hrs hp
-      (natCast_mul_wpow_mem_leftPrefixes hv' (n + m))
-    have hd := hdel _ hnew
-    linarith only [hd, hm, hwC, hrun, hsum]
+  obtain ⟨b, hb, hbw⟩ := exists_head_real_mul_wpow_sub_leftPrefix_le K s hK ht
+    (fun _ hv ↦ Real.toSurreal_le_iff.mp (le_of_mem_rightPrefixes_appendMinus (hsrc ▸ hv))) hw
+  obtain ⟨c, hc, habc⟩ := exists_leftPrefix_wpow_ge_add ha hb
+  have hd := hdel _ (head_real_mul_wpow_sub_leftPrefix_mem_rightPrefixes K s hK
+    (Real.toSurreal_lt_iff.mp (mem_rightPrefixes_iff.mp ht).2) (mem_rightPrefixes_iff.mp ht).1 hc)
+  linarith only [hrun, hwC, hbw, habc, hd]
 
 open Ordinal in
 /-- The original minus positions in an appended minus suffix have at most its length. -/

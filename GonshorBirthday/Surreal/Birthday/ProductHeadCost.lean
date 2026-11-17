@@ -9,16 +9,16 @@ public import GonshorBirthday.Surreal.Birthday.HeadCost
 public import GonshorBirthday.Surreal.Birthday.NormalFormReplacement
 public import GonshorBirthday.Surreal.Birthday.ReducedCostBound
 
+import GonshorBirthday.Surreal.Birthday.HeadCostPrefix
+import GonshorBirthday.Surreal.Birthday.ReducedCostCoefficient
 import GonshorBirthday.Surreal.HahnSeries.NormalFormMul
 
 /-!
 # Reduced costs for actual normal-form product terms
 
 A retained product boundary imposes the two shifted input retention conditions.
-Positive replacement prevents support cancellation and makes every fibre with a
-nondyadic input factor nondyadic. Auxiliary surreal cuts encode both the input's
-own right prefixes and the shifted output right prefixes at once. The unrestricted
-reduced-cost addition inequality then bounds each actual product monomial cost.
+The output head supplies one cutoff. Subtracting the other exponent gives a cutoff
+in each input, so the reduced-cost addition inequality bounds the output monomial.
 -/
 
 universe u
@@ -134,6 +134,42 @@ theorem exists_head_retention_cutoff_on (H s : Surreal.{u}) (U : Set Surreal.{u}
   · exact support_ge_and_coeff_birthday_lt_of_lt hv.1 huv
   · exact hv
 
+private theorem reducedOmegaCost_le_headOmegaCost {H C : Surreal.{u}} (s : Surreal.{u})
+    (hC : H.support ⊆ Ici C ∧ (H.coeff C : Surreal.{u}).birthday < NatOrdinal.of Ordinal.omega0) :
+    reducedOmegaCost C s ≤ headOmegaCost H s := by
+  rw [reducedOmegaCost_eq_positions, headOmegaCost_eq_positions]
+  apply omegaExpansionLength_mono
+  intro i hi
+  rw [mem_headOmegaPositions]
+  rcases (mem_reducedOmegaPositions.mp hi) with hl | h
+  · exact Or.inl hl
+  · exact Or.inr (h.lt_or_eq.elim (support_ge_and_coeff_birthday_lt_of_lt hC.1)
+      (fun he ↦ he ▸ hC))
+
+/-- A retained output boundary that translates to retained input boundaries bounds the head cost. -/
+theorem headOmegaCost_add_le_of_retention {H K L a b : Surreal.{u}}
+    (hret : ∀ v ∈ rightPrefixes (a + b), L.support ⊆ Ici v →
+      (L.coeff v : Surreal.{u}).birthday < NatOrdinal.of Ordinal.omega0 →
+      (H.support ⊆ Ici (v - b) ∧
+        (H.coeff (v - b) : Surreal.{u}).birthday < NatOrdinal.of Ordinal.omega0) ∧
+      (K.support ⊆ Ici (v - a) ∧
+        (K.coeff (v - a) : Surreal.{u}).birthday < NatOrdinal.of Ordinal.omega0)) :
+    headOmegaCost L (a + b) ≤ headOmegaCost H a * headOmegaCost K b := by
+  obtain ⟨C, _, hC, hretC⟩ := exists_head_rightPrefix_retention_cutoff L (a + b)
+  rw [headOmegaCost_eq_reducedOmegaCost _ _ C hretC]
+  rcases hC with rfl | hC
+  · rw [reducedOmegaCost_self_eq_wpow]
+    exact (wpow_plusCount_add_le_mul a b).trans
+      (mul_le_mul' (wpow_plusCount_le_headOmegaCost H a) (wpow_plusCount_le_headOmegaCost K b))
+  · obtain ⟨hs, hf⟩ := (hretC C hC).mpr le_rfl
+    obtain ⟨hA, hB⟩ := hret C hC hs hf
+    have h := (mem_rightPrefixes_iff.mp hC).2.le
+    have hcost := reducedOmegaCost_add_le a b (C - b) (C - a) (le_sub_iff_add_le.mpr h)
+      (le_sub_iff_add_le.mpr (by rwa [add_comm]))
+    rw [sub_add_cancel, add_comm a (C - a), sub_add_cancel, min_self] at hcost
+    exact hcost.trans (mul_le_mul' (reducedOmegaCost_le_headOmegaCost a hA)
+      (reducedOmegaCost_le_headOmegaCost b hB))
+
 /-- Each actual product monomial cost fits the natural product of its input head costs. -/
 theorem headOmegaCost_mul_replacement_le {τ : ℝ}
     (hτpos : 0 < τ) (hτ : Transcendental ℚ τ) (x y : Surreal.{u})
@@ -143,48 +179,12 @@ theorem headOmegaCost_mul_replacement_le {τ : ℝ}
       (a + b)) (a + b) ≤
       headOmegaCost ((normalFormBirthdayReplacement τ x).normalFormTrunc a) a *
         headOmegaCost ((normalFormBirthdayReplacement τ y).normalFormTrunc b) b := by
-  let U : Set Surreal.{u} := rightPrefixes a ∪ (fun v ↦ v - b) '' rightPrefixes (a + b)
-  let V : Set Surreal.{u} := rightPrefixes b ∪ (fun v ↦ v - a) '' rightPrefixes (a + b)
-  have hU : U ⊆ Ioi a := by
-    intro u hu
-    rcases hu with hu | ⟨v, hv, rfl⟩
-    · exact (mem_rightPrefixes_iff.mp hu).2
-    · exact lt_sub_iff_add_lt.mpr (mem_rightPrefixes_iff.mp hv).2
-  have hV : V ⊆ Ioi b := by
-    intro u hu
-    rcases hu with hu | ⟨v, hv, rfl⟩
-    · exact (mem_rightPrefixes_iff.mp hu).2
-    · change b < v - a
-      apply lt_sub_iff_add_lt.mpr
-      simpa only [add_comm] using (mem_rightPrefixes_iff.mp hv).2
-  obtain ⟨A, haA, hA⟩ := exists_head_retention_cutoff_on
-    ((normalFormBirthdayReplacement τ x).normalFormTrunc a) a U hU
-  obtain ⟨B, hbB, hB⟩ := exists_head_retention_cutoff_on
-    ((normalFormBirthdayReplacement τ y).normalFormTrunc b) b V hV
-  have hcostA := headOmegaCost_eq_reducedOmegaCost
-    ((normalFormBirthdayReplacement τ x).normalFormTrunc a) a A (fun w hw ↦ hA w (Or.inl hw))
-  have hcostB := headOmegaCost_eq_reducedOmegaCost
-    ((normalFormBirthdayReplacement τ y).normalFormTrunc b) b B (fun w hw ↦ hB w (Or.inl hw))
-  obtain ⟨C, _, hC, hretC⟩ := exists_head_rightPrefix_retention_cutoff
-    ((normalFormBirthdayReplacement τ x * normalFormBirthdayReplacement τ y).normalFormTrunc
-      (a + b))
-    (a + b)
-  have hCbound : C ≤ min (A + b) (a + B) := by
-    rcases hC with rfl | hC
-    · exact le_min (add_le_add haA.le le_rfl) (add_le_add le_rfl hbB.le)
-    · have hret := (hretC C hC).mpr le_rfl
-      have hleft := head_retention_left_of_replacement_product hτpos hτ x y hb
-        (mem_rightPrefixes_iff.mp hC).2 hret
-      have hright := head_retention_left_of_replacement_product hτpos hτ y x ha
-        (a := b) (v := C) (by simpa only [add_comm] using (mem_rightPrefixes_iff.mp hC).2)
-        (by simpa only [mul_comm, add_comm] using hret)
-      have hleA : C - b ≤ A := (hA (C - b) (Or.inr ⟨C, hC, rfl⟩)).mp hleft
-      have hleB : C - a ≤ B := (hB (C - a) (Or.inr ⟨C, hC, rfl⟩)).mp hright
-      exact le_min (sub_le_iff_le_add.mp hleA)
-        (by simpa only [add_comm] using sub_le_iff_le_add.mp hleB)
-  rw [hcostA, hcostB,
-    headOmegaCost_eq_reducedOmegaCost _ _ C hretC]
-  exact (reducedOmegaCost_mono (a + b) hCbound).trans
-    (reducedOmegaCost_add_le a b A B haA.le hbB.le)
+  apply headOmegaCost_add_le_of_retention
+  intro v hv hs hf
+  have hlt := (mem_rightPrefixes_iff.mp hv).2
+  refine ⟨head_retention_left_of_replacement_product hτpos hτ x y hb hlt ⟨hs, hf⟩, ?_⟩
+  apply head_retention_left_of_replacement_product hτpos hτ y x ha (a := b)
+  · simpa only [add_comm] using hlt
+  · simpa only [add_comm, mul_comm] using And.intro hs hf
 
 end Surreal

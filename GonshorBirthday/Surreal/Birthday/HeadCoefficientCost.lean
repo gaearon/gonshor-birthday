@@ -96,24 +96,20 @@ private theorem ordinal_omega0_sub_one : Ordinal.omega0 - (1 : Ordinal.{u}) = Or
     _ = (1 + Ordinal.omega0) - 1 := by simp
     _ = _ := Ordinal.add_sub_cancel 1 _
 
-/-- A reduced monomial product bound extends to complete costs for all real coefficients. -/
-theorem headCoefficientCost_mul_le {H K L a b : Surreal.{u}}
+/-- A cell pays for any coefficient whose birthday fits the product of its input birthdays. -/
+theorem headCoefficientCost_le_mul_of_birthday_le {H K L a b : Surreal.{u}} {r t v : ℝ}
     (hcell : headOmegaCost L (a + b) ≤ headOmegaCost H a * headOmegaCost K b)
-    (r t : ℝ) :
-    headCoefficientCost L (a + b) (r * t) ≤
-      headCoefficientCost H a r * headCoefficientCost K b t := by
-  by_cases hr : r = 0
-  · rw [hr, zero_mul, headCoefficientCost_zero, headCoefficientCost_zero, zero_mul]
-  by_cases ht : t = 0
-  · rw [ht, mul_zero, headCoefficientCost_zero, headCoefficientCost_zero, mul_zero]
-  rw [headCoefficientCost_of_ne_zero L (a + b) (mul_ne_zero hr ht),
+    (hr : r ≠ 0) (ht : t ≠ 0) (hprod : (v : Surreal.{u}).birthday ≤
+      (r : Surreal.{u}).birthday * (t : Surreal.{u}).birthday) :
+    headCoefficientCost L (a + b) v ≤ headCoefficientCost H a r * headCoefficientCost K b t := by
+  by_cases hv : v = 0
+  · rw [hv, headCoefficientCost_zero]
+    exact zero_le
+  rw [headCoefficientCost_of_ne_zero L (a + b) hv,
     headCoefficientCost_of_ne_zero H a hr, headCoefficientCost_of_ne_zero K b ht]
   have hP := wpow_plusCount_le_headOmegaCost H a
   have hQ := wpow_plusCount_le_headOmegaCost K b
   have hPQ := wpow_plusCount_add_le_mul a b
-  have hprod : ((r * t : ℝ) : Surreal.{u}).birthday ≤
-      (r : Surreal.{u}).birthday * (t : Surreal.{u}).birthday := by
-    simpa only [Real.toSurreal_mul] using birthday_real_mul_le.{u} r t
   by_cases hinf : (r : Surreal.{u}).birthday = NatOrdinal.of Ordinal.omega0 ∨
       (t : Surreal.{u}).birthday = NatOrdinal.of Ordinal.omega0
   · have htail : Ordinal.omega0 ≤ (r : Surreal.{u}).birthday.val - 1 ∨
@@ -144,6 +140,19 @@ theorem headCoefficientCost_mul_le {H K L a b : Surreal.{u}}
       rw [show (m + 1) * (n + 1) = 1 + (m + n + m * n) by ring]
       simp only [Nat.cast_add, Nat.cast_one]
     exact h.trans_eq he
+
+/-- A reduced monomial product bound extends to complete costs for all real coefficients. -/
+theorem headCoefficientCost_mul_le {H K L a b : Surreal.{u}}
+    (hcell : headOmegaCost L (a + b) ≤ headOmegaCost H a * headOmegaCost K b)
+    (r t : ℝ) :
+    headCoefficientCost L (a + b) (r * t) ≤
+      headCoefficientCost H a r * headCoefficientCost K b t := by
+  by_cases hr : r = 0
+  · rw [hr, zero_mul, headCoefficientCost_zero, headCoefficientCost_zero, zero_mul]
+  by_cases ht : t = 0
+  · rw [ht, mul_zero, headCoefficientCost_zero, headCoefficientCost_zero, mul_zero]
+  apply headCoefficientCost_le_mul_of_birthday_le hcell hr ht
+  simpa only [Real.toSurreal_mul] using birthday_real_mul_le.{u} r t
 
 /-- Increasing the coefficient birthday increases the term cost under a fixed head. -/
 theorem headCoefficientCost_mono_birthday (H s : Surreal.{u}) {r t : ℝ}
