@@ -9,9 +9,8 @@ public import CombinatorialGames.Surreal.Birthday.Basic
 
 public import Mathlib.Algebra.Order.Ring.Abs
 
-import GonshorBirthday.Surreal.Birthday.CoefficientComparison
-import GonshorBirthday.Surreal.Birthday.ProductCoefficientCost
 import GonshorBirthday.Surreal.Birthday.ProductGrid
+import GonshorBirthday.Surreal.Birthday.ReducedCostBound
 
 /-!
 # The multiplication birthday bound
@@ -63,9 +62,7 @@ theorem birthday_intCast_mul_le (n : ℤ) (x : Surreal.{u}) :
 
 /-- **Gonshor's conjecture**: the birthday of a product of surreal numbers is at most the
 natural product of their birthdays. -/
-theorem birthday_mul_le (x y : Surreal) : (x * y).birthday ≤ x.birthday * y.birthday := by
-  obtain ⟨Z, hcoeff, hs, hf⟩ := exists_product_fibre_bound x y
-  exact (birthday_le_of_coeff_birthday_le hcoeff).trans
-    (birthday_le_of_product_fibre_costs x y Z hs hf)
+theorem birthday_mul_le (x y : Surreal) : (x * y).birthday ≤ x.birthday * y.birthday :=
+  birthday_mul_le_of_exponent_bounds x y (fun a _ b _ ↦ reducedOmegaCost_add_at_le a b)
 
 end Surreal

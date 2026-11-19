@@ -12,6 +12,7 @@ public import GonshorBirthday.Surreal.HahnSeries.NormalFormMul
 import GonshorBirthday.NatOrdinal.FiniteBlocks
 import GonshorBirthday.NatOrdinal.ProductFibre
 import GonshorBirthday.NatOrdinal.OrderedSum
+import GonshorBirthday.Surreal.Birthday.CoefficientComparison
 import GonshorBirthday.Surreal.Birthday.ProductCoefficientCost
 import GonshorBirthday.Surreal.Birthday.NormalFormLength
 
@@ -122,6 +123,15 @@ theorem birthday_le_of_product_fibre_costs (x y Z : Surreal.{u})
     rw [Ordinal.type_toType, Ordinal.type_toType]
     rfl
   exact (hlen Z) ▸ (hlen x) ▸ (hlen y) ▸ h
+
+/-- To bound a product it suffices to bound the translated cutoffs at its actual exponent pairs. -/
+theorem birthday_mul_le_of_exponent_bounds (x y : Surreal.{u})
+    (hcut : ∀ a ∈ x.support, ∀ b ∈ y.support, ∀ C, a + b ≤ C →
+      reducedOmegaCost C (a + b) ≤ reducedOmegaCost (C - b) a * reducedOmegaCost (C - a) b) :
+    (x * y).birthday ≤ x.birthday * y.birthday := by
+  obtain ⟨Z, hcoeff, hs, hf⟩ := exists_product_fibre_bound_of_exponent_bounds x y hcut
+  exact (birthday_le_of_coeff_birthday_le hcoeff).trans
+    (birthday_le_of_product_fibre_costs x y Z hs hf)
 
 /-- The birthday of the product of the replaced series is at most the natural product of the
 birthdays of the original surreals. -/
