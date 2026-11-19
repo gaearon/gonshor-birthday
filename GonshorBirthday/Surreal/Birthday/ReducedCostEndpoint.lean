@@ -61,6 +61,14 @@ theorem rightPrefix_le_cutoff_of_birthday_le {C x y z : Surreal.{u}}
     (by rw [hy'.1]; exact hy'.2) (by rw [hy'.1]; exact hyC)
   simpa only [hz'.1] using h
 
+/-- Among canonical right prefixes, a smaller value occurs strictly later. -/
+theorem birthday_lt_of_rightPrefixes_lt {x y z : Surreal.{u}}
+    (hy : y ∈ rightPrefixes x) (hz : z ∈ rightPrefixes x) (hzy : z < y) :
+    y.birthday < z.birthday := by
+  apply lt_of_not_ge
+  intro h
+  exact hzy.not_ge (rightPrefix_le_cutoff_of_birthday_le hz le_rfl hy h)
+
 /-- A nonempty bounded retained-minus family bounds every original minus position. -/
 theorem rightPrefixes_birthday_lt_of_retained_bounded {C x : Surreal.{u}}
     {a : NatOrdinal.{u}} (hne : ∃ y ∈ rightPrefixes x, y ≤ C)

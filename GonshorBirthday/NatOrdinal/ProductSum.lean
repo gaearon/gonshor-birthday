@@ -7,6 +7,7 @@ module
 
 public import GonshorBirthday.NatOrdinal.ProductOrder
 public import GonshorBirthday.NatOrdinal.ProductAttainment
+import GonshorBirthday.NatOrdinal.OrderedSum
 
 /-!
 # Ordered sums of natural-product cell budgets
@@ -89,6 +90,18 @@ theorem of_type_sigma_mul_le {I J K : Type u}
     have hxy : x ≤ y := by
       simpa only [Equiv.apply_symm_apply] using hE k ⟨hx, hy⟩
     exact Sigma.Lex.right _ _ hxy
+
+/-- Scaling every block of an ordered sum by the same natural product fits the scaled sum. -/
+theorem of_type_sigma_mul_const_le {I : Type u} [LinearOrder I] [WellFoundedLT I]
+    (f : I → NatOrdinal.{u}) (c : NatOrdinal.{u}) :
+    of (typeLT (Σₗ i, (f i * c).val.ToType)) ≤
+      of (typeLT (Σₗ i, (f i).val.ToType)) * c := by
+  let e : I ≃ I × PUnit.{u+1} := (Equiv.prodUnique I PUnit.{u+1}).symm
+  have hm : Monotone e.symm := fun _ _ h ↦ h.1
+  have h := of_type_sigma_mul_le f (fun _ : PUnit.{u+1} ↦ c) e hm
+  change of (typeLT (Σₗ i : I, (f i * c).val.ToType)) ≤ _ at h
+  simpa only [Ordinal.type_sigma_const, Ordinal.type_toType,
+    Ordinal.type_eq_one_of_unique, mul_one, of_val] using h
 
 /-- Natural multiplication is superadditive for ordinary ordinal concatenation. -/
 theorem of_oadd_mul_le (a b c : NatOrdinal.{u}) :

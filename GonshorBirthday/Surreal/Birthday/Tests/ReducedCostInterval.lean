@@ -49,20 +49,26 @@ theorem negative_half_monomial_gap_window (s : Surreal.{u}) :
     · rw [he]
       simp
 
-/-- Applying the public bound to the actual window gives equality for every exponent. -/
-theorem negative_half_monomial_interval_bound (s : Surreal.{u}) :
-    (ω^ (plusCount s)).val ≤ (ω^ (plusCount s)).val := by
-  have hs : ((-1 : ℝ) : Surreal.{u}) = appendMinus (0 : Surreal.{u}) := by
-    apply eq_appendMinus_of_birthdayTruncation_eq
-    · simp
-    · simp
-    · norm_num
-  have hwin := negative_half_monomial_gap_window s
-  apply wpow_plusCount_le_plus_interval_of_gap_window (0 : Surreal) s
-    (by simp) (r := -1) (t := 0) (by norm_num) (by simpa using hs)
-    (NatOrdinal.val.strictMono (NatOrdinal.wpow_pos _)) (d := (2 : Surreal)⁻¹ * ω^ s)
-  · simpa only [Real.toSurreal_neg, Real.toSurreal_one, neg_one_mul, zero_add] using hwin.2.1
-  · simpa only [Real.toSurreal_neg, Real.toSurreal_one, neg_one_mul, zero_add] using hwin.2.2
+/-- An arbitrary extension of `-M` crosses an old right option under translation
+exactly when it extends `-M/2`. Its signs after that point can be arbitrary. -/
+theorem negative_half_prefix_iff_exists_margin (s : Surreal.{u}) {e : Surreal.{u}}
+    (he : birthdayTruncation e (-(ω^ s)).birthday = -(ω^ s)) :
+    birthdayTruncation e (-((2 : Surreal)⁻¹ * ω^ s)).birthday = -((2 : Surreal)⁻¹ * ω^ s) ↔
+      ∃ d : Surreal, 0 < d ∧ (∀ w ∈ rightPrefixes (-(ω^ s)), -(ω^ s) + d < w) ∧
+        ∃ w ∈ rightPrefixes (-(ω^ s)), w ≤ e + d := by
+  have hm : ((-1 : ℝ) : Surreal.{u}) = appendMinus (0 : Surreal.{u}) := by
+    apply eq_appendMinus_of_birthdayTruncation_eq <;> simp
+  obtain ⟨q, _, hq, hblock⟩ := exists_dyadic_head_coefficient_plus_block (0 : Surreal.{u}) s
+    (by simp) (r := -1) (by norm_num) (by simp [birthday_neg, birthday_one])
+  have hp : ((q.toRat : ℝ) : Surreal.{u}) = appendPlus ((-1 : ℝ) : Surreal.{u}) := by
+    simpa only [Real.toSurreal_ratCast] using hq
+  have hy := hblock.symm.trans (by simpa only [Real.toSurreal_neg, Real.toSurreal_one,
+    neg_one_mul, zero_add] using (negative_half_monomial_gap_window s).1)
+  have h := coefficient_plus_prefix_iff_exists_margin (0 : Surreal.{u}) s (by simp)
+    (by norm_num : (-1 : ℝ) ≠ 0) (t := 0) (by simpa using hm) hp
+    (by simpa only [Real.toSurreal_neg, Real.toSurreal_one, neg_one_mul, zero_add] using he)
+  simpa only [Real.toSurreal_ratCast, hy, Real.toSurreal_neg, Real.toSurreal_one,
+    neg_one_mul, zero_add] using h
 
 open Ordinal in
 example : typeLT {i : (appendMinuses (1 : Surreal.{u}) Ordinal.omega0).birthday.val.ToType |

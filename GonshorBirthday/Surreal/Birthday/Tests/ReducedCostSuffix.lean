@@ -8,6 +8,8 @@ module
 public import GonshorBirthday.Surreal.Birthday.ReducedCostSuffix
 
 import GonshorBirthday.Surreal.Birthday.ReducedCostBlocks
+public import GonshorBirthday.Surreal.Birthday.DyadicCoefficient
+public import Mathlib.SetTheory.Ordinal.Veblen
 
 /-!
 # A sharp transfinite minus-suffix bound
@@ -70,5 +72,29 @@ theorem negative_omega_suffix_bound_is_sharp :
   have hf : StrictMono f := fun _ _ h ↦ h
   have h := (RelEmbedding.ofMonotone f hf).ordinal_type_le
   simpa only [Ordinal.type_toType, hb, NatOrdinal.val_of, NatOrdinal.wpow_one] using h
+
+/-- At any epsilon number, the minuses of `-ε` at cutoff zero have exactly the same
+length as the plus contribution at `-ε/2`. -/
+theorem minus_epsilon_and_its_next_coefficient (i : Ordinal.{0}) :
+    let E := NatOrdinal.of (ε_ i)
+    reducedOmegaCost 0 (-E.toSurreal) = E ∧
+      ω^ (plusCount (-((2 : Surreal)⁻¹ * E.toSurreal))) = E := by
+  let E := NatOrdinal.of (ε_ i)
+  have hω := (Ordinal.omega0_lt_epsilon i).le
+  have hmul : Ordinal.omega0 * ε_ i = ε_ i := by
+    calc
+      Ordinal.omega0 * ε_ i = Ordinal.omega0 * Ordinal.omega0 ^ ε_ i := by
+        rw [Ordinal.omega0_opow_epsilon]
+      _ = ε_ i := by rw [← Ordinal.opow_one_add, Ordinal.one_add_of_omega0_le hω,
+        Ordinal.omega0_opow_epsilon]
+  have hfixed : ω^ E = E := by simp only [E, NatOrdinal.wpow_def, NatOrdinal.val_of,
+    Ordinal.omega0_opow_epsilon]
+  have hM : ω^ E.toSurreal = E.toSurreal := by rw [← toSurreal_wpow, hfixed]
+  have he := congrArg Neg.neg (half_mul_wpow_eq_appendMinuses E.toSurreal)
+  rw [appendMinuses_eq_neg, neg_neg, plusCount_toSurreal, hfixed, hM] at he
+  constructor
+  · rw [cost_negative_ordinal, NatOrdinal.val_of, hmul, Ordinal.one_add_of_omega0_le hω]
+  · rw [he, plusCount_appendPluses, plusCount_neg_toSurreal, NatOrdinal.val_zero, zero_add,
+      NatOrdinal.of_val, hfixed]
 
 end Tests

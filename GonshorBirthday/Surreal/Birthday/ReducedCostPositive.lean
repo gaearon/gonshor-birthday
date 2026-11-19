@@ -5,21 +5,17 @@ Authors: Dan Abramov
 -/
 module
 
-public import GonshorBirthday.Surreal.Birthday.ReducedCostHead
+public import GonshorBirthday.Surreal.Birthday.Head
 
 import GonshorBirthday.Surreal.Birthday.HeadRun
 import GonshorBirthday.Surreal.Birthday.ReciprocalCoefficient
 import GonshorBirthday.Surreal.Birthday.SupportGap
 
 /-!
-# Excluding positive unit last coefficients at reduced-cost endpoints
+# Right gaps above a final positive unit monomial
 
-For a positive unit monomial after an arbitrary higher head, every canonical
-right prefix whose birthday reaches the head has a gap that can be halved.
-Canonical addition inverse cofinality eliminates the old head options; the
-supported-gap theorem supplies a sufficiently close replacement prefix.
-Cofinal right-prefix birthdays therefore exclude the lowered-cutoff gap window.
-No boundary restriction on the higher head or the exponent is needed.
+After an arbitrary higher head, every right prefix reaching the head's birthday has
+a gap that can be halved.
 -/
 
 universe u
@@ -81,59 +77,5 @@ theorem exists_rightPrefix_half_gap_of_late_head_add_wpow
     rw [hfour] at hcof
     refine ⟨p, hp, ?_⟩
     linarith only [hgap, hsmall, hcof]
-
-/-- Cofinal right-prefix birthdays give gap halving after any positive unit last monomial. -/
-theorem exists_rightPrefix_half_gap_of_head_add_wpow_cofinal
-    (K s : Surreal.{u}) (hK : K.support ⊆ Ioi s)
-    (hcof : ∀ a < (K + ω^ s).birthday,
-      ∃ v ∈ rightPrefixes (K + ω^ s), a < v.birthday)
-    {w : Surreal.{u}} (hw : w ∈ rightPrefixes (K + ω^ s)) :
-    ∃ p ∈ rightPrefixes (K + ω^ s),
-      2 * (p - (K + ω^ s)) < w - (K + ω^ s) := by
-  have hhead : K ∈ leftPrefixes (K + ω^ s) := by
-    apply mem_leftPrefixes_iff.mpr
-    refine ⟨?_, lt_add_of_pos_right _ (wpow_pos s)⟩
-    apply birthdayTruncation_add_of_support_lt
-    simpa only [wlog_wpow] using hK
-  obtain ⟨v, hv, hav⟩ := hcof (max K.birthday w.birthday)
-    (max_lt (birthday_lt_of_mem_leftPrefixes hhead) (birthday_lt_of_mem_rightPrefixes hw))
-  have hlate : K.birthday ≤ v.birthday := (le_max_left _ _).trans hav.le
-  have hwv : w.birthday < v.birthday := (le_max_right _ _).trans_lt hav
-  have hvw : v < w := by
-    have h := birthdayTruncation_lt hwv (mem_rightPrefixes_iff.mp hw).2
-    rwa [(mem_rightPrefixes_iff.mp hv).1] at h
-  obtain ⟨p, hp, hgap⟩ := exists_rightPrefix_half_gap_of_late_head_add_wpow K s hK hv hlate
-  exact ⟨p, hp, hgap.trans (sub_lt_sub_right hvw _)⟩
-
-/-- A positive unit last monomial with cofinal right prefixes cannot satisfy the gap window. -/
-theorem not_gap_window_of_head_add_wpow_cofinal
-    (K s : Surreal.{u}) (hK : K.support ⊆ Ioi s)
-    (hcof : ∀ a < (K + ω^ s).birthday,
-      ∃ v ∈ rightPrefixes (K + ω^ s), a < v.birthday)
-    {e d : Surreal.{u}}
-    (hz : birthdayTruncation e (K + ω^ s).birthday = K + ω^ s)
-    (hdel : ∀ w ∈ rightPrefixes (K + ω^ s), K + ω^ s + d < w)
-    (hne : ∃ w ∈ rightPrefixes (K + ω^ s), w ≤ e + d) : False := by
-  apply not_coinitial_halving_rightPrefixes_of_gap_window hz hdel hne
-    (rightPrefixes (K + ω^ s)) (Subset.refl _) ?_ ?_
-  · exact fun w hw ↦ ⟨w, hw, le_rfl⟩
-  · exact fun w hw ↦ exists_rightPrefix_half_gap_of_head_add_wpow_cofinal K s hK hcof hw
-
-/-- A pure endpoint with cofinal right prefixes cannot have a positive unit last coefficient. -/
-theorem not_pure_endpoint_of_head_add_wpow_cofinal
-    (a b d K s : Surreal.{u}) (hd : 0 ≤ d)
-    (ih : ∀ x y : Surreal.{u}, x.birthday + y.birthday < a.birthday + b.birthday →
-      ∀ t : Surreal.{u}, 0 < t → reducedOmegaCost (x + y + t) (x + y) ≤
-        reducedOmegaCost (x + t) x * reducedOmegaCost (y + t) y)
-    (hK : K.support ⊆ Ioi s)
-    (hcof : ∀ c < (K + ω^ s).birthday,
-      ∃ v ∈ rightPrefixes (K + ω^ s), c < v.birthday)
-    (hz : K + ω^ s ∈ leftPrefixes (a + b)) {p : NatOrdinal.{u}}
-    (hp : plusCount (K + ω^ s) < p)
-    (hH : reducedOmegaCost (a + b + d) (K + ω^ s) = ω^ p)
-    (hM : reducedOmegaCost (a + d) a * reducedOmegaCost (b + d) b = ω^ p)
-    (hne : ∃ w ∈ rightPrefixes (K + ω^ s), w ≤ a + b + d) : False :=
-  not_gap_window_of_head_add_wpow_cofinal K s hK hcof (mem_leftPrefixes_iff.mp hz).1
-    (rightPrefixes_gt_shifted_cutoff_of_pure_eq hd ih hz hp hH hM) hne
 
 end Surreal

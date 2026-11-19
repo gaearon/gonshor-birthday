@@ -25,26 +25,19 @@ namespace Surreal
 
 open Ordinal
 
-/-- Minus-position count and the plus-only baseline bound every selected expanded contribution. -/
-theorem omegaExpansionContribution_le_of_embedding (x : Surreal.{u})
+/-- In any subsequence of exponent positions, the plus blocks contribute at most the
+plus-only length. The other summand counts the selected minus blocks with their actual weights. -/
+theorem omegaExpansionContribution_le_minus_add_wpow (x : Surreal.{u})
     {I : Type u} [LinearOrder I] [WellFoundedLT I] (e : I ↪o x.birthday.val.ToType) :
     NatOrdinal.of (typeLT (Σₗ i : I,
       (ω^ (plusCount (birthdayTruncation x (NatOrdinal.of (e i).toOrd.1)) + 1)).val.ToType)) ≤
-      NatOrdinal.of ((ω^ (plusCount x + 1)).val *
-        typeLT {i : I | x < birthdayTruncation x (NatOrdinal.of (e i).toOrd.1)}) +
+      NatOrdinal.of (typeLT (Σₗ i :
+        {i : I | x < birthdayTruncation x (NatOrdinal.of (e i).toOrd.1)},
+        (ω^ (plusCount (birthdayTruncation x (NatOrdinal.of (e i.1).toOrd.1)) + 1)).val.ToType)) +
       ω^ plusCount x := by
   let W (i : x.birthday.val.ToType) :=
     (ω^ (plusCount (birthdayTruncation x (NatOrdinal.of i.toOrd.1)) + 1)).val.ToType
   let M : Set I := {i | x < birthdayTruncation x (NatOrdinal.of (e i).toOrd.1)}
-  have hminus : typeLT (Σₗ i : M, W (e i.1)) ≤
-      (ω^ (plusCount x + 1)).val * typeLT M := by
-    apply Ordinal.type_sigma_le_mul_of_le
-    intro i
-    rw [Ordinal.type_toType]
-    apply NatOrdinal.val.monotone
-    apply NatOrdinal.wpow_le_wpow.mpr
-    exact add_le_add (plusCount_birthdayTruncation_le x
-      (NatOrdinal.of.strictMono (e i.1).toOrd.2).le) le_rfl
   let P : Set x.birthday.val.ToType :=
     {i | birthdayTruncation x (NatOrdinal.of i.toOrd.1) < x}
   have hp (i : (Mᶜ : Set I)) : birthdayTruncation x (NatOrdinal.of (e i.1).toOrd.1) < x := by
@@ -67,18 +60,51 @@ theorem omegaExpansionContribution_le_of_embedding (x : Surreal.{u})
     exact (NatOrdinal.of.monotone hb).trans
       ((NatOrdinal.of.monotone le_add_self).trans_eq he)
   exact (NatOrdinal.of_type_sigma_le_add_compl (fun i : I ↦ W (e i)) M).trans
-    (add_le_add (NatOrdinal.of.monotone hminus) hplus)
+    (add_le_add le_rfl hplus)
 
-/-- Minus-position count and the plus-only baseline bound any selected original positions. -/
-theorem omegaExpansionContribution_le (x : Surreal.{u})
-    (S : Set x.birthday.val.ToType) :
-    NatOrdinal.of (typeLT (Σₗ i : S,
-      (ω^ (plusCount (birthdayTruncation x (NatOrdinal.of i.1.toOrd.1)) + 1)).val.ToType)) ≤
-      NatOrdinal.of ((ω^ (plusCount x + 1)).val *
-        typeLT {i : S | x < birthdayTruncation x (NatOrdinal.of i.1.toOrd.1)}) +
-      ω^ plusCount x :=
-  omegaExpansionContribution_le_of_embedding x
+/-- Including the initial sign, an expansion fits the natural sum of its minus and plus lengths. -/
+theorem omegaExpansionLength_le_minus_add_wpow (x : Surreal.{u}) (S : Set x.birthday.val.ToType) :
+    omegaExpansionLength x S ≤ NatOrdinal.of (typeLT (Σₗ j :
+      {i : S | x < birthdayTruncation x (NatOrdinal.of i.1.toOrd.1)},
+      (ω^ (plusCount (birthdayTruncation x (NatOrdinal.of j.1.1.toOrd.1)) + 1)).val.ToType)) +
+        ω^ plusCount x := by
+  rcases S.eq_empty_or_nonempty with rfl | ⟨j, hj⟩
+  · rw [omegaExpansionLength_empty]
+    exact (NatOrdinal.wpow_zero ▸ NatOrdinal.wpow_le_wpow.mpr
+      (show 0 ≤ plusCount x from bot_le)).trans (le_add_of_nonneg_left bot_le)
+  let W (i : S) := ω^ (plusCount (birthdayTruncation x (NatOrdinal.of i.1.toOrd.1)) + 1)
+  have h := Ordinal.type_sigma_block_le (fun i : S ↦ (W i).val.ToType) ⟨j, hj⟩
+  rw [Ordinal.type_toType] at h
+  have hω : Ordinal.omega0 ≤ (W ⟨j, hj⟩).val := by
+    simpa only [NatOrdinal.wpow_one, NatOrdinal.val_of] using NatOrdinal.val.monotone
+      (NatOrdinal.wpow_le_wpow.mpr (show (1 : NatOrdinal.{u}) ≤ _ + 1 from
+        le_add_of_nonneg_left bot_le))
+  rw [omegaExpansionLength_eq, Ordinal.one_add_of_omega0_le (hω.trans h)]
+  exact omegaExpansionContribution_le_minus_add_wpow x
     (OrderEmbedding.ofStrictMono Subtype.val (fun _ _ h ↦ h))
+
+/-- Minus-position count and the plus-only baseline bound every selected expanded contribution. -/
+theorem omegaExpansionContribution_le_of_embedding (x : Surreal.{u})
+    {I : Type u} [LinearOrder I] [WellFoundedLT I] (e : I ↪o x.birthday.val.ToType) :
+    NatOrdinal.of (typeLT (Σₗ i : I,
+      (ω^ (plusCount (birthdayTruncation x (NatOrdinal.of (e i).toOrd.1)) + 1)).val.ToType)) ≤
+      NatOrdinal.of ((ω^ (plusCount x + 1)).val *
+        typeLT {i : I | x < birthdayTruncation x (NatOrdinal.of (e i).toOrd.1)}) +
+      ω^ plusCount x := by
+  let W (i : x.birthday.val.ToType) :=
+    (ω^ (plusCount (birthdayTruncation x (NatOrdinal.of i.toOrd.1)) + 1)).val.ToType
+  let M : Set I := {i | x < birthdayTruncation x (NatOrdinal.of (e i).toOrd.1)}
+  have hminus : typeLT (Σₗ i : M, W (e i.1)) ≤
+      (ω^ (plusCount x + 1)).val * typeLT M := by
+    apply Ordinal.type_sigma_le_mul_of_le
+    intro i
+    rw [Ordinal.type_toType]
+    apply NatOrdinal.val.monotone
+    apply NatOrdinal.wpow_le_wpow.mpr
+    exact add_le_add (plusCount_birthdayTruncation_le x
+      (NatOrdinal.of.strictMono (e i.1).toOrd.2).le) le_rfl
+  exact (omegaExpansionContribution_le_minus_add_wpow x e).trans
+    (add_le_add (NatOrdinal.of.monotone hminus) le_rfl)
 
 /-- A suffix of a pure reduced cost has the same order type as the whole cost. -/
 theorem reducedOmegaCost_tail_eq_wpow_of_eq {C x : Surreal.{u}} {p : NatOrdinal.{u}}

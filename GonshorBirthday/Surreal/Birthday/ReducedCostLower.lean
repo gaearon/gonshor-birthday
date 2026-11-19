@@ -5,7 +5,7 @@ Authors: Dan Abramov
 -/
 module
 
-public import GonshorBirthday.Surreal.Birthday.ReducedCostNormalize
+public import GonshorBirthday.Surreal.Birthday.ReducedCostCutoff
 
 import GonshorBirthday.Surreal.Birthday.Addition
 import Mathlib.Tactic.Linarith
@@ -30,13 +30,14 @@ theorem reducedOmegaCost_eq_wpow_of_le_of_retained {C D x : Surreal.{u}}
     {p : NatOrdinal.{u}} (hCD : C ≤ D) (hD : reducedOmegaCost D x = ω^ p)
     (hp : plusCount x < p) (hne : ∃ y ∈ rightPrefixes x, y ≤ C) :
     reducedOmegaCost C x = ω^ p := by
-  apply reducedOmegaCost_eq_wpow_of_cutoff_final (X₀ := 0) hCD
+  obtain ⟨w, hw, hwC⟩ := hne
+  have hr := plusCount_birthdayTruncation_le x (birthday_lt_of_mem_rightPrefixes hw).le
+  rw [(mem_rightPrefixes_iff.mp hw).1] at hr
+  have hwCost := reducedOmegaCost_at_rightPrefix_eq_final_power (H := 0) hw (hwC.trans hCD)
     (by simpa only [NatOrdinal.val_zero, zero_add, NatOrdinal.of_val] using hD)
-    (fun _ _ _ ↦ bot_le) ?_ hne
-  intro y hy _
-  have h := plusCount_birthdayTruncation_le x (birthday_lt_of_mem_rightPrefixes hy).le
-  rw [(mem_rightPrefixes_iff.mp hy).1] at h
-  exact h.trans_lt hp
+    bot_le (hr.trans_lt hp)
+  exact ((reducedOmegaCost_mono x hCD).trans_eq hD).antisymm
+    (hwCost.ge.trans (reducedOmegaCost_mono x hwC))
 
 /-- A proper prefix after all original minuses is a canonical left prefix. -/
 theorem birthdayTruncation_mem_leftPrefixes_of_rightPrefixes_before (x : Surreal.{u})
@@ -145,24 +146,6 @@ theorem exists_rightPrefix_gap_window {e z d : Surreal.{u}}
   refine ⟨w, hw, max_lt (by linarith) (by linarith), by linarith, ?_⟩
   have h₁ := le_max_left d (e - z)
   have h₂ := le_max_right d (e - z)
-  linarith
-
-/-- A retained gap window excludes any coinitial right-prefix family admitting repeated halving. -/
-theorem not_coinitial_halving_rightPrefixes_of_gap_window {e z d : Surreal.{u}}
-    (hz : birthdayTruncation e z.birthday = z)
-    (hdel : ∀ w ∈ rightPrefixes z, z + d < w)
-    (hne : ∃ w ∈ rightPrefixes z, w ≤ e + d)
-    (S : Set Surreal.{u}) (hS : S ⊆ rightPrefixes z)
-    (hcoinitial : ∀ w ∈ rightPrefixes z, ∃ v ∈ S, v ≤ w) :
-    ¬ (∀ v ∈ S, ∃ u ∈ S, 2 * (u - z) < v - z) := by
-  intro hhalf
-  obtain ⟨w, hw, _, hgap, hsum⟩ := exists_rightPrefix_gap_window hz hdel hne
-  obtain ⟨v, hv, hvw⟩ := hcoinitial w hw
-  obtain ⟨u, hu, huv⟩ := hhalf v hv
-  have hdu := hdel u (hS hu)
-  have heu := (mem_rightPrefixes_iff.mp
-    (rightPrefixes_subset_of_birthdayTruncation_eq hz (hS hu))).2
-  have hmax : max d (e - z) < u - z := max_lt (by linarith) (by linarith)
   linarith
 
 /-- A minimal pure-cost failure has a proper limit prefix with every lowered minus deleted. -/

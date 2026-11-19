@@ -110,6 +110,42 @@ theorem exists_head_real_mul_wpow_sub_leftPrefix_le
   · obtain ⟨a, ha, hap⟩ := exists_real_mul_wpow_sub_leftPrefix_le_of_neg hs0 hr0 hmin hp
     exact ⟨a, ha, (add_le_add_right hap K).trans hpw⟩
 
+/-- After a coefficient minus with predecessor `t`, subtracting the left options of the
+monomial from the point with coefficient `t` gives a coinitial family of right options. -/
+theorem rightPrefixes_at_coefficient_minus (K s : Surreal.{u}) (hK : K.support ⊆ Ioi s)
+    {r t : ℝ} (h : (r : Surreal.{u}) = appendMinus (t : Surreal.{u})) :
+    let z := K + (r : Surreal) * ω^ s
+    let W := K + (t : Surreal) * ω^ s
+    (∀ u ∈ leftPrefixes (ω^ s), W - u ∈ rightPrefixes z) ∧
+      ∀ w ∈ rightPrefixes z, ∃ u ∈ leftPrefixes (ω^ s), W - u ≤ w := by
+  have ht : (t : Surreal.{u}) ∈ rightPrefixes (r : Surreal) := by
+    rw [h]
+    exact mem_rightPrefixes_iff.mpr ⟨birthdayTruncation_appendMinus _, appendMinus_lt _⟩
+  refine ⟨fun u hu ↦ ?_, fun w hw ↦ ?_⟩
+  · simpa only [← add_sub_assoc] using head_real_mul_wpow_sub_leftPrefix_mem_rightPrefixes
+      K s hK (Real.toSurreal_lt_iff.mp (mem_rightPrefixes_iff.mp ht).2)
+        (mem_rightPrefixes_iff.mp ht).1 hu
+  · simpa only [← add_sub_assoc] using exists_head_real_mul_wpow_sub_leftPrefix_le K s hK ht
+      (fun _ hv ↦ Real.toSurreal_le_iff.mp (le_of_mem_rightPrefixes_appendMinus (h ▸ hv))) hw
+
+/-- Viewed from the point with coefficient `q`, all these gaps exceed `c` monomials
+whenever `q + c < t`. The option with coefficient `t` attains `t - q` monomials. -/
+theorem right_gaps_at_coefficient_minus (K s : Surreal.{u}) (hK : K.support ⊆ Ioi s)
+    {r t : ℝ} (h : (r : Surreal.{u}) = appendMinus (t : Surreal.{u})) (q : ℝ) :
+    let z := K + (r : Surreal) * ω^ s
+    let y := K + (q : Surreal) * ω^ s
+    (∀ c : ℝ, c < t - q → ∀ w ∈ rightPrefixes z, y + (c : Surreal) * ω^ s < w) ∧
+      y + ((t - q : ℝ) : Surreal) * ω^ s ∈ rightPrefixes z := by
+  obtain ⟨hright, hcoin⟩ := rightPrefixes_at_coefficient_minus K s hK h
+  constructor
+  · intro c hc w hw
+    obtain ⟨u, hu, huw⟩ := hcoin w hw
+    have hu' := lt_real_mul_wpow_of_mem_leftPrefixes (sub_pos.mpr hc) hu
+    rw [Real.toSurreal_sub, Real.toSurreal_sub, sub_mul, sub_mul] at hu'
+    linarith only [hu', huw]
+  · have hW := hright 0 (zero_mem_leftPrefixes (wpow_pos s))
+    simpa only [Real.toSurreal_sub, sub_mul, add_sub_assoc, add_add_sub_cancel, sub_zero] using hW
+
 /-- A last real coefficient minus gives a coinitial finite lower-monomial family. -/
 theorem exists_head_real_mul_wpow_sub_natCast_mul_wpow_le
     (K x : Surreal.{u}) (hK : K.support ⊆ Ioi x) {r s : ℝ}

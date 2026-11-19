@@ -90,4 +90,25 @@ theorem reducedOmegaCost_rightPrefix_add_budget_of_smaller {a b A B v : Surreal.
     simpa only [add_comm, min_comm, mul_comm] using
       reducedOmegaCost_rightPrefix_add_budget hu huB hv' huv' hi
 
+/-- In the induction on the input birthdays, it remains exactly to bound the word before
+each left prefix strictly at the original output cutoff. -/
+theorem reducedOmegaCost_add_le_iff_leftPrefixes_of_smaller {a b A B : Surreal.{u}}
+    (ha : a ≤ A) (hb : b ≤ B)
+    (ih : ∀ x y : Surreal.{u}, x.birthday + y.birthday < a.birthday + b.birthday →
+      ∀ d : Surreal.{u}, 0 < d → reducedOmegaCost (x + y + d) (x + y) ≤
+        reducedOmegaCost (x + d) x * reducedOmegaCost (y + d) y) :
+    reducedOmegaCost (min (A + b) (a + B)) (a + b) ≤ reducedOmegaCost A a * reducedOmegaCost B b ↔
+      ∀ z ∈ leftPrefixes (a + b),
+        reducedOmegaCost (min (A + b) (a + B)) z < reducedOmegaCost A a * reducedOmegaCost B b := by
+  apply reducedOmegaCost_le_iff_leftPrefixes_lt
+  · simpa only [one_mul] using mul_le_mul' (one_le_reducedOmegaCost A a)
+      (one_le_reducedOmegaCost B b)
+  · intro p hp
+    exact (plusCount_add_le a b).trans (NatOrdinal.le_cantorSupport_mul
+      (plusCount_le_cantorSupport_reducedOmegaCost A a)
+      (plusCount_le_cantorSupport_reducedOmegaCost B b) p hp)
+  · intro w hw hwC
+    exact (NatOrdinal.of.monotone le_self_add).trans
+      (reducedOmegaCost_rightPrefix_add_budget_of_smaller ha hb ih hw hwC)
+
 end Surreal

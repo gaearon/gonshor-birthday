@@ -6,9 +6,9 @@ Authors: Dan Abramov
 module
 
 public import GonshorBirthday.Surreal.Birthday.ReducedCostClassification
-public import GonshorBirthday.Surreal.Birthday.ReducedCostInput
 
 import GonshorBirthday.Surreal.Birthday.Tests.ReducedCostInterval
+import GonshorBirthday.Surreal.Birthday.HeadPerturbation
 
 /-!
 # A final coefficient minus from an actual limit-prefix window
@@ -54,5 +54,22 @@ theorem negative_omega_has_last_coefficient_minus :
   have hwin := negative_half_monomial_gap_window (1 : Surreal.{u})
   exact exists_last_coefficient_minus_of_gap_window
     (birthdayTruncation_appendPluses _ _) negative_omega_rightPrefixes_cofinal hwin.2.1 hwin.2.2
+
+/-- At the turn from `-M` to `-M/2`, every old right gap measured from the new point
+exceeds a third of `M`, and the right prefix zero gives exactly half of `M`. -/
+theorem negative_half_right_gaps (s : Surreal.{u}) :
+    (∀ w ∈ rightPrefixes (-(ω^ s)), -(ω^ s) / 2 + (ω^ s) / 3 < w) ∧
+      (0 : Surreal) ∈ rightPrefixes (-(ω^ s)) ∧ (0 : Surreal) - (-(ω^ s) / 2) = (ω^ s) / 2 := by
+  constructor
+  · intro w hw
+    have h := fraction_wpow_lt_right_gap_head_sub_wpow (K := 0) (s := s) (by simp)
+      (c := (5 / 6 : ℝ)) (by norm_num) (by simpa only [zero_sub] using hw)
+    rw [zero_sub, Real.toSurreal_div,
+      show ((5 : ℝ) : Surreal.{u}) = 5 from Real.toSurreal_natCast 5,
+      show ((6 : ℝ) : Surreal.{u}) = 6 from Real.toSurreal_natCast 6] at h
+    linarith only [h]
+  · constructor
+    · simpa only [zero_sub] using head_mem_rightPrefixes_sub_wpow (0 : Surreal) s (by simp)
+    · ring
 
 end Tests

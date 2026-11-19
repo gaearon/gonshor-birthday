@@ -146,8 +146,10 @@ private theorem reducedOmegaCost_le_headOmegaCost {H C : Surreal.{u}} (s : Surre
   · exact Or.inr (h.lt_or_eq.elim (support_ge_and_coeff_birthday_lt_of_lt hC.1)
       (fun he ↦ he ▸ hC))
 
-/-- A retained output boundary that translates to retained input boundaries bounds the head cost. -/
-theorem headOmegaCost_add_le_of_retention {H K L a b : Surreal.{u}}
+/-- A bound at each retained boundary gives the term bound for that exponent pair. -/
+theorem headOmegaCost_add_le_of_exponent_bound {H K L a b : Surreal.{u}}
+    (hcut : ∀ C, a + b ≤ C → reducedOmegaCost C (a + b) ≤
+      reducedOmegaCost (C - b) a * reducedOmegaCost (C - a) b)
     (hret : ∀ v ∈ rightPrefixes (a + b), L.support ⊆ Ici v →
       (L.coeff v : Surreal.{u}).birthday < NatOrdinal.of Ordinal.omega0 →
       (H.support ⊆ Ici (v - b) ∧
@@ -164,11 +166,19 @@ theorem headOmegaCost_add_le_of_retention {H K L a b : Surreal.{u}}
   · obtain ⟨hs, hf⟩ := (hretC C hC).mpr le_rfl
     obtain ⟨hA, hB⟩ := hret C hC hs hf
     have h := (mem_rightPrefixes_iff.mp hC).2.le
-    have hcost := reducedOmegaCost_add_le a b (C - b) (C - a) (le_sub_iff_add_le.mpr h)
-      (le_sub_iff_add_le.mpr (by rwa [add_comm]))
-    rw [sub_add_cancel, add_comm a (C - a), sub_add_cancel, min_self] at hcost
-    exact hcost.trans (mul_le_mul' (reducedOmegaCost_le_headOmegaCost a hA)
+    exact (hcut C h).trans (mul_le_mul' (reducedOmegaCost_le_headOmegaCost a hA)
       (reducedOmegaCost_le_headOmegaCost b hB))
+
+/-- A retained output boundary that translates to retained input boundaries bounds the head cost. -/
+theorem headOmegaCost_add_le_of_retention {H K L a b : Surreal.{u}}
+    (hret : ∀ v ∈ rightPrefixes (a + b), L.support ⊆ Ici v →
+      (L.coeff v : Surreal.{u}).birthday < NatOrdinal.of Ordinal.omega0 →
+      (H.support ⊆ Ici (v - b) ∧
+        (H.coeff (v - b) : Surreal.{u}).birthday < NatOrdinal.of Ordinal.omega0) ∧
+      (K.support ⊆ Ici (v - a) ∧
+        (K.coeff (v - a) : Surreal.{u}).birthday < NatOrdinal.of Ordinal.omega0)) :
+    headOmegaCost L (a + b) ≤ headOmegaCost H a * headOmegaCost K b :=
+  headOmegaCost_add_le_of_exponent_bound (reducedOmegaCost_add_at_le a b) hret
 
 /-- Each actual product monomial cost fits the natural product of its input head costs. -/
 theorem headOmegaCost_mul_replacement_le {τ : ℝ}

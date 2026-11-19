@@ -7,6 +7,7 @@ module
 
 public import GonshorBirthday.Surreal.Birthday.ReducedCost
 
+import GonshorBirthday.NatOrdinal.OrderedSumPosition
 import GonshorBirthday.NatOrdinal.OrderedSum
 
 /-!
@@ -136,6 +137,48 @@ theorem reducedOmegaCost_add_block_le_of_mem_rightPrefixes {C x y : Surreal.{u}}
         using hyC⟩
   simpa only [j, Ordinal.ToType.toOrd, OrderIso.symm_apply_apply, NatOrdinal.of_val, hxa]
     using reducedOmegaCost_prefix_add_block_le C x j
+
+/-- The initial sign and the endpoints of the retained blocks bound the whole word. -/
+theorem reducedOmegaCost_le_of_blocks (C x : Surreal.{u}) (M : NatOrdinal.{u}) (hM : 1 ≤ M)
+    (h : ∀ j : reducedOmegaPositions C x, let w := birthdayTruncation x (NatOrdinal.of j.1.toOrd.1)
+      NatOrdinal.of ((reducedOmegaCost C w).val + (ω^ (plusCount w + 1)).val) ≤ M) :
+    reducedOmegaCost C x ≤ M := by
+  let I := reducedOmegaPositions C x
+  let W (j : I) := (ω^ (plusCount (birthdayTruncation x (NatOrdinal.of j.1.toOrd.1)) + 1)).val
+  rw [reducedOmegaCost_eq_positions, omegaExpansionLength_eq]
+  change 1 + typeLT (Σₗ j : I, (W j).ToType) ≤ M.val
+  by_cases he : typeLT (Σₗ j : I, (W j).ToType) = 0
+  · simpa only [he, add_zero, NatOrdinal.val_one] using NatOrdinal.val.monotone hM
+  apply (Ordinal.add_le_iff he).mpr
+  intro t ht
+  obtain ⟨⟨j, v⟩, rfl⟩ := Ordinal.typein_surj ((· < ·) : (Σₗ j : I, (W j).ToType) → _ → Prop) ht
+  change 1 + Ordinal.typein ((· < ·) : (Σₗ j : I, (W j).ToType) → _ → Prop) (toLex ⟨j, v⟩) < M.val
+  rw [Ordinal.typein_sigma, Ordinal.typein_toType_eq_toOrd, ← add_assoc]
+  have hj := h j
+  dsimp only at hj
+  rw [reducedOmegaCost_birthdayTruncation_eq_iio C x j, NatOrdinal.val_of] at hj
+  exact ((Ordinal.isNormal_add_right _).strictMono v.toOrd.2).trans_le (NatOrdinal.val.monotone hj)
+
+/-- Once every retained minus block fits, the whole estimate is equivalent to strictness at
+each left prefix, provided every Cantor place of the bound can hold the remaining pluses. -/
+theorem reducedOmegaCost_le_iff_leftPrefixes_lt {C x : Surreal.{u}} {M : NatOrdinal.{u}}
+    (hM : 1 ≤ M) (hs : ∀ p ∈ NatOrdinal.cantorSupport M, plusCount x ≤ p)
+    (hR : ∀ w ∈ rightPrefixes x, w ≤ C →
+      NatOrdinal.of ((reducedOmegaCost C w).val + (ω^ (plusCount w + 1)).val) ≤ M) :
+    reducedOmegaCost C x ≤ M ↔ ∀ w ∈ leftPrefixes x, reducedOmegaCost C w < M := by
+  refine ⟨fun h _ hw ↦ (reducedOmegaCost_lt_of_mem_leftPrefixes C hw).trans_le h, fun h ↦ ?_⟩
+  apply reducedOmegaCost_le_of_blocks C x M hM
+  intro j
+  let t := NatOrdinal.of j.1.toOrd.1
+  have ht : t < x.birthday := NatOrdinal.of.strictMono j.1.toOrd.2
+  by_cases hl : birthdayTruncation x t < x
+  · have hw := mem_leftPrefixes.mpr ⟨t, ht, rfl, hl⟩
+    exact NatOrdinal.oadd_wpow_le_of_lt_of_le_cantorSupport (h _ hw)
+      (fun p hp ↦ (Order.add_one_le_iff.mpr (plusCount_lt_of_mem_leftPrefixes hw)).trans (hs p hp))
+  · have hne : x ≠ birthdayTruncation x t := fun he ↦
+      ht.ne ((birthday_birthdayTruncation x ht.le).symm.trans (congrArg birthday he.symm))
+    exact hR _ (mem_rightPrefixes.mpr ⟨t, ht, rfl, lt_of_le_of_ne (le_of_not_gt hl) hne⟩)
+      ((mem_reducedOmegaPositions.mp j.2).resolve_left hl)
 
 /-- Bounds on cofinally many retained prefixes bound the entire reduced cost. -/
 theorem reducedOmegaCost_le_of_cofinal_prefixes (C x : Surreal.{u}) (M : NatOrdinal.{u})

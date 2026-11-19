@@ -164,8 +164,10 @@ private theorem head_retention_of_shift {x Z a b v : Surreal.{u}}
     · rw [notMem_support_iff.mp hw, Real.toSurreal_zero, birthday_zero]
       exact NatOrdinal.of.strictMono Ordinal.omega0_pos
 
-/-- A series majorizing the product coefficientwise whose terms fit their finite product fibres. -/
-theorem exists_product_fibre_bound (x y : Surreal.{u}) :
+/-- Exponent bounds on the two supports suffice to bound all coefficient fibres. -/
+theorem exists_product_fibre_bound_of_exponent_bounds (x y : Surreal.{u})
+    (hcut : ∀ a ∈ x.support, ∀ b ∈ y.support, ∀ C, a + b ≤ C →
+      reducedOmegaCost C (a + b) ≤ reducedOmegaCost (C - b) a * reducedOmegaCost (C - a) b) :
     ∃ Z : Surreal.{u},
       (∀ s, ((x * y).coeff s : Surreal.{u}).birthday ≤ (Z.coeff s : Surreal.{u}).birthday) ∧
       (∀ a ∈ x.support, ∀ b ∈ y.support, a + b ∈ Z.support) ∧
@@ -185,7 +187,7 @@ theorem exists_product_fibre_bound (x y : Surreal.{u}) :
   have hhead (a) (ha : a ∈ x.support) (b) (hb : b ∈ y.support) :
       headOmegaCost (Z.normalFormTrunc (a + b)) (a + b) ≤
         headOmegaCost (x.normalFormTrunc a) a * headOmegaCost (y.normalFormTrunc b) b := by
-    apply headOmegaCost_add_le_of_retention
+    apply headOmegaCost_add_le_of_exponent_bound (hcut a ha b hb)
     intro v hv hsup hfin
     have hlt := (mem_rightPrefixes_iff.mp hv).2
     refine ⟨head_retention_of_shift (fun w hw ↦ hs w hw b hb)
@@ -232,5 +234,18 @@ theorem exists_product_fibre_bound (x y : Surreal.{u}) :
       exact le_mul_of_one_le_right' (one_le_birthday_real (mem_support_iff.mp hb))
     · rw [h]
       exact le_mul_of_one_le_left' (one_le_birthday_real (mem_support_iff.mp ha))
+
+/-- A series majorizing the product coefficientwise whose terms fit their finite product fibres. -/
+theorem exists_product_fibre_bound (x y : Surreal.{u}) :
+    ∃ Z : Surreal.{u},
+      (∀ s, ((x * y).coeff s : Surreal.{u}).birthday ≤ (Z.coeff s : Surreal.{u}).birthday) ∧
+      (∀ a ∈ x.support, ∀ b ∈ y.support, a + b ∈ Z.support) ∧
+      ∀ s, ∀ {n : ℕ},
+        (e : Fin n ≃ SurrealHahnSeries.supportAntidiagonal x.toHahnSeries y.toHahnSeries s) →
+        headCoefficientCost (Z.normalFormTrunc s) s (Z.coeff s) ≤ NatOrdinal.of (typeLT
+          (Σₗ i : Fin n, (headCoefficientCost (x.normalFormTrunc (e i).1.1) (e i).1.1
+            (x.coeff (e i).1.1) * headCoefficientCost (y.normalFormTrunc (e i).1.2) (e i).1.2
+              (y.coeff (e i).1.2)).val.ToType)) :=
+  exists_product_fibre_bound_of_exponent_bounds x y (fun a _ b _ ↦ reducedOmegaCost_add_at_le a b)
 
 end Surreal

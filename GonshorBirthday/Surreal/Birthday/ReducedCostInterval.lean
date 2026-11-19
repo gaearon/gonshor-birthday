@@ -5,9 +5,10 @@ Authors: Dan Abramov
 -/
 module
 
-public import GonshorBirthday.Surreal.Birthday.HeadRun
-public import GonshorBirthday.Surreal.Birthday.ReducedCostEquality
+public import GonshorBirthday.Surreal.Birthday.CoefficientRun
+public import GonshorBirthday.Surreal.Birthday.ReducedCostSuffix
 
+import GonshorBirthday.Surreal.Birthday.ReducedCostCofinality
 import GonshorBirthday.Surreal.Birthday.CoefficientCofinality
 import GonshorBirthday.Surreal.Birthday.LastMinusFamily
 import GonshorBirthday.Surreal.Birthday.OmegaBlock
@@ -17,11 +18,10 @@ import GonshorBirthday.Surreal.Birthday.HeadSuffix
 /-!
 # Full final intervals at headed coefficient minuses
 
-A lowered-cutoff gap window forces the final plus interval to have length at least
-omega to the last exponent's plus count. A final coefficient minus supplies a
-suffix with at most that many minus positions. The two bounds force equality
-of the interval length and the plus-only input costs. A zero coefficient
-predecessor uses the minus-position count in the monomial itself.
+Passing a right prefix takes at least a full coefficient block of pluses. A final
+coefficient minus has a suffix containing at most that many minuses. For a negative
+unit, count minus positions in the monomial itself.
+
 -/
 
 universe u
@@ -49,51 +49,54 @@ end Ordinal
 namespace Surreal
 open Set
 
-/-- Finite multiples of left-exponent block lengths are cofinal in the full plus-count power. -/
-theorem exists_leftPrefix_monomial_length_gt {s : Surreal.{u}}
-    (hq : plusCount s ≠ 0) {ρ : Ordinal.{u}} (hρ : ρ < (ω^ (plusCount s)).val) :
-    ∃ v ∈ leftPrefixes s, ∃ n : ℕ, ρ < (ω^ (plusCount v)).val * (n : Ordinal) := by
-  have hρ' : NatOrdinal.of ρ < ω^ (plusCount s) := hρ
-  obtain ⟨α, hα, n, hn⟩ := (NatOrdinal.lt_wpow_iff hq).mp hρ'
-  obtain ⟨v, hv, hαv⟩ := exists_leftPrefixes_plusCount_ge hα
-  have hbound : NatOrdinal.of ρ < ω^ (plusCount v) * n :=
-    hn.trans_le (mul_le_mul_of_nonneg_right (NatOrdinal.wpow_le_wpow.mpr hαv) bot_le)
-  refine ⟨v, hv, n, ?_⟩
-  simpa only [NatOrdinal.wpow_mul_natCast, NatOrdinal.val_of, NatOrdinal.val_wpow] using
-    NatOrdinal.val.strictMono hbound
-
-/-- A final plus interval crossing a lowered-cutoff gap window spans a full coefficient block. -/
-theorem wpow_plusCount_le_plus_interval_of_gap_window
-    (K s : Surreal.{u}) (hK : K.support ⊆ Ioi s) {r t : ℝ} (hr : r ≠ 0)
-    (hsrc : (r : Surreal.{u}) = appendMinus (t : Surreal.{u}))
-    {ρ : Ordinal.{u}} (hρpos : 0 < ρ) {d : Surreal.{u}}
-    (hdel : ∀ w ∈ rightPrefixes (K + (r : Surreal) * ω^ s),
-      K + (r : Surreal) * ω^ s + d < w)
-    (hne : ∃ w ∈ rightPrefixes (K + (r : Surreal) * ω^ s),
-      w ≤ appendPluses (K + (r : Surreal) * ω^ s) ρ + d) :
-    (ω^ (plusCount s)).val ≤ ρ := by
-  by_cases hq : plusCount s = 0
-  · simp only [hq, NatOrdinal.wpow_zero, NatOrdinal.val_one]
-    simpa only [zero_add] using Order.add_one_le_iff.mpr hρpos
-  by_contra hn
-  have hρ : NatOrdinal.of ρ < plusCount (ω^ s) := by
-    rw [plusCount_wpow]
-    exact NatOrdinal.of.strictMono (lt_of_not_ge hn)
-  obtain ⟨a, ha, hρa⟩ := exists_leftPrefixes_plusCount_ge hρ
-  have hrun : appendPluses (K + (r : Surreal) * ω^ s) ρ ≤ K + (r : Surreal) * ω^ s + a := by
-    rw [← appendPluses_eq_add_leftPrefix_wpow (support_head_real_mul_wpow_subset K s hK r)
-      (mem_support_head_real_mul_wpow K s hK hr) ha]
-    exact (strictMono_appendPluses _).monotone (NatOrdinal.val.monotone hρa)
-  have ht : (t : Surreal.{u}) ∈ rightPrefixes (r : Surreal) := by
-    rw [hsrc]
-    exact mem_rightPrefixes_iff.mpr ⟨birthdayTruncation_appendMinus _, appendMinus_lt _⟩
-  obtain ⟨w, hw, hwC⟩ := hne
-  obtain ⟨b, hb, hbw⟩ := exists_head_real_mul_wpow_sub_leftPrefix_le K s hK ht
-    (fun _ hv ↦ Real.toSurreal_le_iff.mp (le_of_mem_rightPrefixes_appendMinus (hsrc ▸ hv))) hw
-  obtain ⟨c, hc, habc⟩ := exists_leftPrefix_wpow_ge_add ha hb
-  have hd := hdel _ (head_real_mul_wpow_sub_leftPrefix_mem_rightPrefixes K s hK
-    (Real.toSurreal_lt_iff.mp (mem_rightPrefixes_iff.mp ht).2) (mem_rightPrefixes_iff.mp ht).1 hc)
-  linarith only [hrun, hwC, hbw, habc, hd]
+/-- Suppose the last coefficient of `z` ends in a minus. For an extension `e` of `z`,
+its next coefficient plus is a prefix of `e` exactly when a translate of `e` reaches
+an old right option while the same translate of `z` lies below them all. -/
+theorem coefficient_plus_prefix_iff_exists_margin
+    (K s : Surreal.{u}) (hK : K.support ⊆ Ioi s) {r t q : ℝ} (hr : r ≠ 0)
+    (hminus : (r : Surreal.{u}) = appendMinus (t : Surreal.{u}))
+    (hplus : (q : Surreal.{u}) = appendPlus (r : Surreal.{u})) {e : Surreal.{u}}
+    (hpre : birthdayTruncation e (K + (r : Surreal) * ω^ s).birthday = K + (r : Surreal) * ω^ s) :
+    let z := K + (r : Surreal) * ω^ s
+    let y := K + (q : Surreal) * ω^ s
+    birthdayTruncation e y.birthday = y ↔ ∃ d : Surreal, 0 < d ∧
+      (∀ w ∈ rightPrefixes z, z + d < w) ∧ ∃ w ∈ rightPrefixes z, w ≤ e + d := by
+  let z := K + (r : Surreal) * ω^ s
+  let W := K + (t : Surreal) * ω^ s
+  let y := K + (q : Surreal) * ω^ s
+  obtain ⟨hright, hcoin⟩ := rightPrefixes_at_coefficient_minus K s hK hminus
+  have hW : W ∈ rightPrefixes z := by
+    simpa only [sub_zero] using hright 0 (zero_mem_leftPrefixes (wpow_pos s))
+  have heR (w : Surreal.{u}) (hw : w ∈ rightPrefixes z) : e < w :=
+    (mem_rightPrefixes_iff.mp (rightPrefixes_subset_of_birthdayTruncation_eq hpre hw)).2
+  constructor
+  · intro hy
+    refine ⟨W - e, sub_pos.mpr (heR W hW), ?_, W, hW, by simp⟩
+    intro w hw
+    obtain ⟨u, hu, huw⟩ := hcoin w hw
+    have hl := head_real_mul_wpow_add_leftPrefix_mem_leftPrefixes K s hK hplus hu
+    have he := (mem_leftPrefixes_iff.mp (leftPrefixes_subset_of_birthdayTruncation_eq hy hl)).2
+    change z + (W - e) < w
+    change K + ((r : Surreal) * ω^ s + u) < e at he
+    dsimp only [z]
+    linarith only [he, huw]
+  · rintro ⟨d, _, hdel, w, hw, hwe⟩
+    obtain ⟨v, hv, hvw⟩ := hcoin w hw
+    have hleft {u : Surreal.{u}} (hu : u ∈ leftPrefixes (ω^ s)) : z + u < e := by
+      obtain ⟨c, hc, hsum⟩ := exists_leftPrefix_wpow_ge_add hu hv
+      have hd : z + d < W - c := hdel _ (hright c hc)
+      linarith only [hd, hsum, hvw, hwe]
+    have hl (p : Surreal.{u}) (hp : p ∈ leftPrefixes y) : p < e := by
+      rcases exists_head_real_mul_wpow_add_natCast_mul_wpow_ge K s hK hplus hp with
+        h | ⟨v, hv, n, h⟩
+      · apply h.trans_lt
+        simpa only [add_zero] using hleft (zero_mem_leftPrefixes (wpow_pos s))
+      · apply h.trans_lt
+        simpa only [z, add_assoc] using hleft (natCast_mul_wpow_mem_leftPrefixes hv n)
+    have hr' (p : Surreal.{u}) (hp : p ∈ rightPrefixes y) : e < p :=
+      heR p (rightPrefixes_head_real_mul_wpow_appendPlus K s hK hr hplus ▸ hp)
+    simpa only [ofSets_leftPrefixes_rightPrefixes] using
+      (birthdayTruncation_eq_of_btwn (H := leftPrefixes_lt_rightPrefixes y) hl hr')
 
 open Ordinal in
 /-- The original minus positions in an appended minus suffix have at most its length. -/
@@ -107,83 +110,17 @@ theorem minus_suffix_le_of_eq_appendMinuses {x y : Surreal.{u}} {ρ : Ordinal.{u
     exact NatOrdinal.val.monotone hi.1
 
 open Ordinal in
-/-- A bounded minus suffix forces a full block and plus-only input costs. -/
-theorem full_block_and_baseline_of_head_minus_suffix
-    (a b d K s : Surreal.{u}) {r t : ℝ} (hK : K.support ⊆ Ioi s) (hr : r ≠ 0)
-    (hsrc : (r : Surreal.{u}) = appendMinus (t : Surreal.{u}))
-    {α β c : NatOrdinal.{u}} {ρ : Ordinal.{u}} (hρpos : 0 < ρ)
-    (hA : reducedOmegaCost (a + d) a = ω^ α)
-    (hB : reducedOmegaCost (b + d) b = ω^ β)
-    (hH : reducedOmegaCost (a + b + d) (K + (r : Surreal) * ω^ s) = ω^ (α + β))
-    (he : a + b = appendPluses (K + (r : Surreal) * ω^ s) ρ)
-    (hc : c < (K + (r : Surreal) * ω^ s).birthday)
+/-- Beyond a prefix of a final coefficient minus, at most one coefficient block of
+minus positions remains. This includes a negative unit, whose predecessor is zero. -/
+theorem exists_minus_suffix_le_of_coefficient_minus (K s : Surreal.{u}) (hK : K.support ⊆ Ioi s)
+    {r t : ℝ} (hsrc : (r : Surreal.{u}) = appendMinus (t : Surreal.{u}))
     (hcof : ∀ j < (K + (r : Surreal) * ω^ s).birthday,
-      ∃ y ∈ rightPrefixes (K + (r : Surreal) * ω^ s), j < y.birthday ∧ y ≤ a + b + d)
-    (hdel : ∀ w ∈ rightPrefixes (K + (r : Surreal) * ω^ s),
-      K + (r : Surreal) * ω^ s + d < w)
-    (hminus : typeLT {i : (K + (r : Surreal) * ω^ s).birthday.val.ToType |
-      c ≤ NatOrdinal.of i.toOrd.1 ∧ K + (r : Surreal) * ω^ s <
-        birthdayTruncation (K + (r : Surreal) * ω^ s) (NatOrdinal.of i.toOrd.1)} ≤
-          (ω^ (plusCount s)).val) :
-    ρ = (ω^ (plusCount s)).val ∧
-      plusCount (a + b) = α + β ∧ α = plusCount a ∧ β = plusCount b ∧
-      reducedOmegaCost (a + d) a = ω^ plusCount a ∧
-      reducedOmegaCost (b + d) b = ω^ plusCount b := by
-  have hne : ∃ w ∈ rightPrefixes (K + (r : Surreal) * ω^ s),
-      w ≤ appendPluses (K + (r : Surreal) * ω^ s) ρ + d := by
-    obtain ⟨w, hw, _, hwC⟩ := hcof c hc
-    exact ⟨w, hw, by simpa only [← he] using hwC⟩
-  exact full_block_and_baseline_of_pure_suffix a b d (K + (r : Surreal) * ω^ s)
-    hA hB hH he (wpow_plusCount_le_plus_interval_of_gap_window K s hK hr hsrc
-      hρpos hdel hne) hc hcof hminus
-
-/-- A nonzero coefficient predecessor supplies both coefficient-block length bounds. -/
-theorem full_block_and_baseline_of_head_nonzero_predecessor
-    (a b d K s : Surreal.{u}) {r t : ℝ} (hK : K.support ⊆ Ioi s) (hr : r ≠ 0)
-    (ht : t ≠ 0) (hsrc : (r : Surreal.{u}) = appendMinus (t : Surreal.{u}))
-    {α β : NatOrdinal.{u}} {ρ : Ordinal.{u}} (hρpos : 0 < ρ)
-    (hA : reducedOmegaCost (a + d) a = ω^ α)
-    (hB : reducedOmegaCost (b + d) b = ω^ β)
-    (hH : reducedOmegaCost (a + b + d) (K + (r : Surreal) * ω^ s) = ω^ (α + β))
-    (he : a + b = appendPluses (K + (r : Surreal) * ω^ s) ρ)
-    (hcof : ∀ j < (K + (r : Surreal) * ω^ s).birthday,
-      ∃ y ∈ rightPrefixes (K + (r : Surreal) * ω^ s), j < y.birthday ∧ y ≤ a + b + d)
-    (hdel : ∀ w ∈ rightPrefixes (K + (r : Surreal) * ω^ s),
-      K + (r : Surreal) * ω^ s + d < w) :
-    ρ = (ω^ (plusCount s)).val ∧
-      plusCount (a + b) = α + β ∧ α = plusCount a ∧ β = plusCount b ∧
-      reducedOmegaCost (a + d) a = ω^ plusCount a ∧
-      reducedOmegaCost (b + d) b = ω^ plusCount b := by
-  have hblock := appendMinuses_head_real_mul_wpow_of_cofinal_rightPrefixes K s hK ht hsrc
-    (fun j hj ↦ by obtain ⟨y, hy, hjy, _⟩ := hcof j hj; exact ⟨y, hy, hjy⟩)
-  have hc : (K + (t : Surreal) * ω^ s).birthday <
-      (K + (r : Surreal) * ω^ s).birthday := by
-    rw [← hblock, birthday_appendMinuses]
-    apply NatOrdinal.val.lt_iff_lt.mp
-    simp only [NatOrdinal.val_of]
-    simpa only [add_zero, NatOrdinal.val_zero] using
-      (Ordinal.isNormal_add_right (K + (t : Surreal) * ω^ s).birthday.val).strictMono
-        (NatOrdinal.val.strictMono (NatOrdinal.wpow_pos (plusCount s)))
-  exact full_block_and_baseline_of_head_minus_suffix a b d K s hK hr hsrc hρpos
-    hA hB hH he hc hcof hdel (minus_suffix_le_of_eq_appendMinuses hblock.symm)
-
-/-- Every final coefficient minus forces a full final plus block and plus-only input costs. -/
-theorem full_block_and_baseline_of_head_coefficient_minus
-    (a b d K s : Surreal.{u}) {r t : ℝ} (hK : K.support ⊆ Ioi s) (hr : r ≠ 0)
-    (hsrc : (r : Surreal.{u}) = appendMinus (t : Surreal.{u}))
-    {α β : NatOrdinal.{u}} {ρ : Ordinal.{u}} (hρpos : 0 < ρ)
-    (hA : reducedOmegaCost (a + d) a = ω^ α)
-    (hB : reducedOmegaCost (b + d) b = ω^ β)
-    (hH : reducedOmegaCost (a + b + d) (K + (r : Surreal) * ω^ s) = ω^ (α + β))
-    (he : a + b = appendPluses (K + (r : Surreal) * ω^ s) ρ)
-    (hcof : ∀ j < (K + (r : Surreal) * ω^ s).birthday,
-      ∃ y ∈ rightPrefixes (K + (r : Surreal) * ω^ s), j < y.birthday ∧ y ≤ a + b + d)
-    (hdel : ∀ w ∈ rightPrefixes (K + (r : Surreal) * ω^ s),
-      K + (r : Surreal) * ω^ s + d < w) :
-    ρ = (ω^ (plusCount s)).val ∧
-      plusCount (a + b) = α + β ∧ α = plusCount a ∧ β = plusCount b ∧
-      reducedOmegaCost (a + d) a = ω^ plusCount a ∧
-      reducedOmegaCost (b + d) b = ω^ plusCount b := by
+      ∃ y ∈ rightPrefixes (K + (r : Surreal) * ω^ s), j < y.birthday) :
+    ∃ c < (K + (r : Surreal) * ω^ s).birthday,
+      typeLT {i : (K + (r : Surreal) * ω^ s).birthday.val.ToType |
+        c ≤ NatOrdinal.of i.toOrd.1 ∧ K + (r : Surreal) * ω^ s <
+          birthdayTruncation (K + (r : Surreal) * ω^ s) (NatOrdinal.of i.toOrd.1)} ≤
+            (ω^ (plusCount s)).val := by
   by_cases ht : t = 0
   · subst t
     have hm : ((-1 : ℝ) : Surreal.{u}) = appendMinus (0 : Surreal.{u}) := by
@@ -196,9 +133,45 @@ theorem full_block_and_baseline_of_head_coefficient_minus
       simp only [Real.toSurreal_neg, Real.toSurreal_one, neg_one_mul, sub_eq_add_neg]
     obtain ⟨c, hc, hminus⟩ := exists_minus_suffix_le_head_sub_wpow K s hK
     rw [← hz] at hc hminus
-    exact full_block_and_baseline_of_head_minus_suffix a b d K s hK hr hsrc hρpos
-      hA hB hH he hc hcof hdel hminus
-  · exact full_block_and_baseline_of_head_nonzero_predecessor a b d K s hK hr ht hsrc hρpos
-      hA hB hH he hcof hdel
+    exact ⟨c, hc, hminus⟩
+  · have hblock := appendMinuses_head_real_mul_wpow_of_cofinal_rightPrefixes K s hK ht hsrc
+      hcof
+    have hc : (K + (t : Surreal) * ω^ s).birthday <
+        (K + (r : Surreal) * ω^ s).birthday := by
+      rw [← hblock, birthday_appendMinuses]
+      apply NatOrdinal.val.lt_iff_lt.mp
+      simp only [NatOrdinal.val_of]
+      simpa only [add_zero, NatOrdinal.val_zero] using
+        (Ordinal.isNormal_add_right (K + (t : Surreal) * ω^ s).birthday.val).strictMono
+          (NatOrdinal.val.strictMono (NatOrdinal.wpow_pos (plusCount s)))
+    exact ⟨_, hc, minus_suffix_le_of_eq_appendMinuses hblock.symm⟩
+
+/-- If the retained minuses at a last coefficient minus exhaust a power, its exponent
+is at most the plus count at the next coefficient plus. -/
+theorem pure_cost_exponent_le_next_coefficient (K s : Surreal.{u}) (hK : K.support ⊆ Ioi s)
+    {r t : ℝ} (hminus : (r : Surreal.{u}) = appendMinus (t : Surreal.{u}))
+    {C : Surreal.{u}} {γ : NatOrdinal.{u}}
+    (hcost : reducedOmegaCost C (K + (r : Surreal) * ω^ s) = ω^ γ)
+    (hcof : ∀ j < (K + (r : Surreal) * ω^ s).birthday,
+      ∃ w ∈ rightPrefixes (K + (r : Surreal) * ω^ s), j < w.birthday ∧ w ≤ C) :
+    let y := appendPluses (K + (r : Surreal) * ω^ s) (ω^ (plusCount s)).val
+    γ ≤ plusCount y := by
+  obtain ⟨i, hi, hcount⟩ := exists_minus_suffix_le_of_coefficient_minus K s hK hminus (by
+    intro j hj
+    obtain ⟨w, hw, hjw, _⟩ := hcof j hj
+    exact ⟨w, hw, hjw⟩)
+  have hbound := pure_reducedOmegaCost_exponent_le_of_minus_suffix hcost hi hcof hcount
+  have h : 1 + (plusCount s).val ≤ Ordinal.omega0 ^ (plusCount s).val := by
+    by_cases hz : (plusCount s).val = 0
+    · simp [hz]
+    · have hω := Ordinal.left_le_opow Ordinal.omega0 (pos_iff_ne_zero.mpr hz)
+      exact ((Ordinal.isNormal_add_right 1).monotone
+        (Ordinal.right_le_opow (plusCount s).val Ordinal.one_lt_omega0)).trans_eq
+        (Ordinal.one_add_of_omega0_le hω)
+  simp only [plusCount_appendPluses]
+  apply hbound.trans
+  apply NatOrdinal.of.monotone
+  rw [add_assoc]
+  exact (Ordinal.isNormal_add_right _).monotone h
 
 end Surreal
