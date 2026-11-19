@@ -5,7 +5,7 @@ Authors: Dan Abramov
 -/
 module
 
-public import GonshorBirthday.Surreal.Birthday.ReducedCostNormalize
+public import GonshorBirthday.Surreal.Birthday.ReducedCostCutoff
 
 import Mathlib.SetTheory.Ordinal.Principal
 

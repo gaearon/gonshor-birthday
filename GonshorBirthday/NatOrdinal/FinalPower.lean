@@ -56,6 +56,19 @@ theorem exists_final_wpow {x : NatOrdinal.{u}} (hx : x ≠ 0) :
       obtain ⟨i, rfl⟩ := he
       exact hf (Fin.le_last _)
 
+/-- Adding an ordinal below the least Cantor power of a strict upper bound preserves strictness. -/
+theorem add_lt_of_lt_last_power {h t n p : NatOrdinal.{u}} (hh : h < n)
+    (ht : t < ω^ p) (hs : ∀ e ∈ cantorSupport n, p ≤ e) : h + t < n := by
+  obtain ⟨k, q, he, ha, hq⟩ := exists_final_wpow (ne_of_gt (bot_le.trans_lt hh))
+  have htq := ht.trans_le (wpow_le_wpow.mpr (hs q hq.1))
+  obtain ⟨r, hr, hb⟩ := (Ordinal.lt_add_iff (wpow_ne_zero q)).mp (hh.trans_eq he)
+  have hm := (of.monotone hb).trans (oadd_le_add k (of r))
+  calc
+    h + t ≤ k + of r + t := add_le_add hm le_rfl
+    _ = k + (of r + t) := add_assoc ..
+    _ < k + ω^ q := add_lt_add_of_le_of_lt le_rfl (add_lt_wpow hr htq)
+    _ = n := (he.trans ha).symm
+
 /-- A nonzero limit ordinal has a positive final Cantor exponent. -/
 theorem exists_final_wpow_of_isSuccLimit {x : NatOrdinal.{u}}
     (hx : Order.IsSuccLimit x.val) :

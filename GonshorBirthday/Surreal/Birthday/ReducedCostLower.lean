@@ -5,7 +5,7 @@ Authors: Dan Abramov
 -/
 module
 
-public import GonshorBirthday.Surreal.Birthday.ReducedCostNormalize
+public import GonshorBirthday.Surreal.Birthday.ReducedCostCutoff
 
 import GonshorBirthday.Surreal.Birthday.Addition
 import Mathlib.Tactic.Linarith
@@ -30,13 +30,14 @@ theorem reducedOmegaCost_eq_wpow_of_le_of_retained {C D x : Surreal.{u}}
     {p : NatOrdinal.{u}} (hCD : C ≤ D) (hD : reducedOmegaCost D x = ω^ p)
     (hp : plusCount x < p) (hne : ∃ y ∈ rightPrefixes x, y ≤ C) :
     reducedOmegaCost C x = ω^ p := by
-  apply reducedOmegaCost_eq_wpow_of_cutoff_final (X₀ := 0) hCD
+  obtain ⟨w, hw, hwC⟩ := hne
+  have hr := plusCount_birthdayTruncation_le x (birthday_lt_of_mem_rightPrefixes hw).le
+  rw [(mem_rightPrefixes_iff.mp hw).1] at hr
+  have hwCost := reducedOmegaCost_at_rightPrefix_eq_final_power (H := 0) hw (hwC.trans hCD)
     (by simpa only [NatOrdinal.val_zero, zero_add, NatOrdinal.of_val] using hD)
-    (fun _ _ _ ↦ bot_le) ?_ hne
-  intro y hy _
-  have h := plusCount_birthdayTruncation_le x (birthday_lt_of_mem_rightPrefixes hy).le
-  rw [(mem_rightPrefixes_iff.mp hy).1] at h
-  exact h.trans_lt hp
+    bot_le (hr.trans_lt hp)
+  exact ((reducedOmegaCost_mono x hCD).trans_eq hD).antisymm
+    (hwCost.ge.trans (reducedOmegaCost_mono x hwC))
 
 /-- A proper prefix after all original minuses is a canonical left prefix. -/
 theorem birthdayTruncation_mem_leftPrefixes_of_rightPrefixes_before (x : Surreal.{u})

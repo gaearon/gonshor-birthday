@@ -23,13 +23,12 @@ public noncomputable section
 
 namespace Surreal
 
-/-- A baseline cost with cofinal retained minuses has cofinal plus positions as well. -/
-theorem leftPrefixes_cofinal_of_baseline_cost {C x : Surreal.{u}}
-    (hbase : reducedOmegaCost C x = ω^ plusCount x)
+/-- With cofinal retained minuses, a last Cantor exponent equal to the plus count
+forces pluses to occur cofinally as well. -/
+theorem leftPrefixes_cofinal_of_plusCount_mem_support {C x : Surreal.{u}}
+    (hsupport : plusCount x ∈ NatOrdinal.cantorSupport (reducedOmegaCost C x))
     (hcof : ∀ a < x.birthday, ∃ y ∈ rightPrefixes x, a < y.birthday ∧ y ≤ C) :
     ∀ a < x.birthday, ∃ y ∈ leftPrefixes x, a < y.birthday := by
-  have hsupport : plusCount x ∈ NatOrdinal.cantorSupport (reducedOmegaCost C x) := by
-    rw [hbase, NatOrdinal.cantorSupport_wpow, Finset.mem_singleton]
   intro a ha
   obtain ⟨v, hv, hav, _⟩ := hcof a ha
   have hp : plusCount v < plusCount x := by
@@ -48,6 +47,14 @@ theorem leftPrefixes_cofinal_of_baseline_cost {C x : Surreal.{u}}
       ⟨ht, (mem_leftPrefixes_iff.mp hy).2.trans (mem_rightPrefixes_iff.mp hv).2⟩
     exact (plusCount_lt_of_mem_leftPrefixes hyv').not_ge hvy
   exact ⟨y, hy, hav.trans hby⟩
+
+/-- A baseline cost with cofinal retained minuses has cofinal plus positions as well. -/
+theorem leftPrefixes_cofinal_of_baseline_cost {C x : Surreal.{u}}
+    (hbase : reducedOmegaCost C x = ω^ plusCount x)
+    (hcof : ∀ a < x.birthday, ∃ y ∈ rightPrefixes x, a < y.birthday ∧ y ≤ C) :
+    ∀ a < x.birthday, ∃ y ∈ leftPrefixes x, a < y.birthday := by
+  apply leftPrefixes_cofinal_of_plusCount_mem_support _ hcof
+  rw [hbase, NatOrdinal.cantorSupport_wpow, Finset.mem_singleton]
 
 /-- A word with cofinal plus positions cannot end in a nonempty minus block. -/
 theorem ne_appendMinuses_of_leftPrefixes_cofinal {x : Surreal.{u}}

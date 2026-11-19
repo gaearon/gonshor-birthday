@@ -8,6 +8,7 @@ module
 public import GonshorBirthday.Surreal.Birthday.ReducedCostReduction
 
 import GonshorBirthday.Surreal.Birthday.Addition
+import GonshorBirthday.NatOrdinal.FinalPower
 
 /-!
 # Directional cofinality of retained prefix costs
@@ -35,41 +36,6 @@ theorem exists_retained_rightPrefix_lt_of_cofinal {C x v : Surreal.{u}}
   have hyv := birthdayTruncation_lt hva (mem_rightPrefixes_iff.mp hv).2
   rw [(mem_rightPrefixes_iff.mp hy).1] at hyv
   exact ⟨y, hy, (le_max_left a v.birthday).trans_lt hby, hyC, hyv⟩
-
-/-- A retained output prefix is paid by an actual retained prefix in one input direction. -/
-theorem exists_retained_rightPrefix_mul_bound_of_smaller {a b A B v : Surreal.{u}}
-    (ha : a ≤ A) (hb : b ≤ B)
-    (ih : ∀ x y : Surreal.{u}, x.birthday + y.birthday < a.birthday + b.birthday →
-      ∀ d : Surreal.{u}, 0 < d → reducedOmegaCost (x + y + d) (x + y) ≤
-        reducedOmegaCost (x + d) x * reducedOmegaCost (y + d) y)
-    (hv : v ∈ rightPrefixes (a + b)) (hvC : v ≤ min (A + b) (a + B)) :
-    (∃ w ∈ rightPrefixes a, w ≤ A ∧
-      reducedOmegaCost (min (A + b) (a + B)) v ≤
-        reducedOmegaCost A w * reducedOmegaCost B b) ∨
-    (∃ w ∈ rightPrefixes b, w ≤ B ∧
-      reducedOmegaCost (min (A + b) (a + B)) v ≤
-        reducedOmegaCost A a * reducedOmegaCost B w) := by
-  rcases exists_rightPrefixes_add_le hv with ⟨w, hw, hwv⟩ | ⟨w, hw, hwv⟩
-  · have hwA : w ≤ A := by
-      have h := hwv.trans (hvC.trans (min_le_left _ _))
-      simpa only [add_le_add_iff_right] using h
-    have hi := (reducedOmegaCost_add_iff_common_margin w b).mp
-      (ih w b (add_lt_add_of_lt_of_le (birthday_lt_of_mem_rightPrefixes hw) le_rfl))
-      A B hwA hb
-    exact Or.inl ⟨w, hw, hwA, reducedOmegaCost_rightPrefix_add_le hw hv hwv hi⟩
-  · have hwB : w ≤ B := by
-      have h := hwv.trans (hvC.trans (min_le_right _ _))
-      simpa only [add_le_add_iff_left] using h
-    have hi := (reducedOmegaCost_add_iff_common_margin w a).mp
-      (ih w a (by
-        simpa only [add_comm] using
-          add_lt_add_of_lt_of_le (birthday_lt_of_mem_rightPrefixes hw)
-            (le_refl a.birthday))) B A hwB ha
-    have hv' : v ∈ rightPrefixes (b + a) := by simpa only [add_comm] using hv
-    have hwv' : w + a ≤ v := by simpa only [add_comm] using hwv
-    refine Or.inr ⟨w, hw, hwB, ?_⟩
-    simpa only [add_comm, min_comm, mul_comm] using
-      reducedOmegaCost_rightPrefix_add_le hw hv' hwv' hi
 
 /-- Cofinal retained-prefix costs force their original minus positions to be cofinal too. -/
 theorem retained_rightPrefixes_cofinal_of_costs_cofinal (C x : Surreal.{u})
@@ -124,19 +90,17 @@ theorem retained_rightPrefix_costs_cofinal_of_positions {C x : Surreal.{u}}
     exact (one_le_reducedOmegaCost C y).trans (hbound y hy hyC)
   exact hS.not_ge (reducedOmegaCost_le_of_cofinal_rightPrefixes C x S hone hcof hbound)
 
-/-- Cofinal retained-prefix costs give a nonzero limit cost. -/
-theorem isSuccLimit_reducedOmegaCost_of_costs_cofinal (C x : Surreal.{u})
-    (hcost : ∀ S < reducedOmegaCost C x, ∃ y ∈ rightPrefixes x,
-      y ≤ C ∧ S < reducedOmegaCost C y) :
-    Order.IsSuccLimit (reducedOmegaCost C x).val := by
-  rcases reducedOmegaCost_eq_one_or_isSuccLimit C x with he | hl
-  · obtain ⟨y, hy, hyC, _⟩ := hcost 0
-      (zero_lt_one.trans_le (one_le_reducedOmegaCost C x))
-    have h := (one_le_reducedOmegaCost C y).trans_lt
-      (reducedOmegaCost_lt_of_mem_rightPrefixes hy hyC)
-    rw [he] at h
-    exact False.elim (lt_irrefl _ h)
-  · exact hl
+/-- Cofinal retained-prefix product costs force the other nonzero factor to be a pure power. -/
+theorem exists_eq_wpow_of_retained_rightPrefix_products_cofinal {C x : Surreal.{u}}
+    {Y : NatOrdinal.{u}} (hY : Y ≠ 0)
+    (hprod : ∀ S < reducedOmegaCost C x * Y, ∃ y ∈ rightPrefixes x,
+      y ≤ C ∧ S < reducedOmegaCost C y * Y) : ∃ p, Y = ω^ p := by
+  have hx : reducedOmegaCost C x ≠ 0 :=
+    ne_of_gt (zero_lt_one.trans_le (one_le_reducedOmegaCost C x))
+  apply NatOrdinal.exists_eq_wpow_of_products_cofinal hx hY
+  intro S hS
+  obtain ⟨y, hy, hyC, hSy⟩ := hprod S hS
+  exact ⟨reducedOmegaCost C y, reducedOmegaCost_lt_of_mem_rightPrefixes hy hyC, hSy.le⟩
 
 /-- Cofinality of the products implies cofinality of the first factor's retained-prefix costs. -/
 theorem retained_rightPrefix_costs_cofinal_of_products (C x : Surreal.{u})
@@ -151,41 +115,53 @@ theorem retained_rightPrefix_costs_cofinal_of_products (C x : Surreal.{u})
   intro hyS
   exact hp.not_ge (mul_le_mul' hyS le_rfl)
 
-/-- Equality at an output limit forces retained-prefix product cofinality in one input. -/
-theorem retained_rightPrefix_products_cofinal_or_of_eq {a b A B z : Surreal.{u}}
-    (ha : a ≤ A) (hb : b ≤ B)
+/-- If a prefix uses the entire product, one input supplies arbitrarily expensive right
+prefixes below every prescribed right option of the output. The same input works for all
+these options, and all costs use the original cutoffs. -/
+theorem rightPrefix_products_cofinal_at_all_gaps {a b A B z : Surreal.{u}}
     (ih : ∀ x y : Surreal.{u}, x.birthday + y.birthday < a.birthday + b.birthday →
       ∀ d : Surreal.{u}, 0 < d → reducedOmegaCost (x + y + d) (x + y) ≤
         reducedOmegaCost (x + d) x * reducedOmegaCost (y + d) y)
-    (hz : birthdayTruncation (a + b) z.birthday = z) (hzpos : 0 < z.birthday)
-    (hcof : ∀ c < z.birthday, ∃ v ∈ rightPrefixes z,
-      c < v.birthday ∧ v ≤ min (A + b) (a + B))
+    (hz : birthdayTruncation (a + b) z.birthday = z)
+    (hcof : ∀ j < z.birthday, ∃ v ∈ rightPrefixes z,
+      j < v.birthday ∧ v ≤ min (A + b) (a + B))
     (hH : reducedOmegaCost A a * reducedOmegaCost B b ≤
       reducedOmegaCost (min (A + b) (a + B)) z) :
-    (∀ S < reducedOmegaCost A a * reducedOmegaCost B b,
-      ∃ w ∈ rightPrefixes a, w ≤ A ∧ S < reducedOmegaCost A w * reducedOmegaCost B b) ∨
-    (∀ S < reducedOmegaCost A a * reducedOmegaCost B b,
-      ∃ w ∈ rightPrefixes b, w ≤ B ∧ S < reducedOmegaCost A a * reducedOmegaCost B w) := by
-  classical
-  by_contra hn
-  rcases not_or.mp hn with ⟨hnA, hnB⟩
-  push Not at hnA hnB
-  obtain ⟨S, hS, hSA⟩ := hnA
-  obtain ⟨T, hT, hTB⟩ := hnB
-  have hbound : ∀ v ∈ rightPrefixes z, v ≤ min (A + b) (a + B) →
-      reducedOmegaCost (min (A + b) (a + B)) v ≤ max S T := by
-    intro v hv hvC
-    have hv' := rightPrefixes_subset_of_birthdayTruncation_eq hz hv
-    rcases exists_retained_rightPrefix_mul_bound_of_smaller ha hb ih hv' hvC with
-      ⟨w, hw, hwA, hcost⟩ | ⟨w, hw, hwB, hcost⟩
-    · exact hcost.trans ((hSA w hw hwA).trans (le_max_left S T))
-    · exact hcost.trans ((hTB w hw hwB).trans (le_max_right S T))
-  have hone : 1 ≤ max S T := by
-    obtain ⟨v, hv, _, hvC⟩ := hcof 0 hzpos
-    exact (one_le_reducedOmegaCost _ v).trans (hbound v hv hvC)
-  have hcost := reducedOmegaCost_le_of_cofinal_rightPrefixes
-    (min (A + b) (a + B)) z (max S T) hone hcof hbound
-  exact (max_lt hS hT).not_ge (hH.trans hcost)
+    (∀ V ∈ rightPrefixes z, ∀ S < reducedOmegaCost A a * reducedOmegaCost B b,
+      ∃ u ∈ rightPrefixes a, u ≤ A ∧ u + b ≤ V ∧
+        S < reducedOmegaCost A u * reducedOmegaCost B b) ∨
+    (∀ U ∈ rightPrefixes z, ∀ T < reducedOmegaCost A a * reducedOmegaCost B b,
+      ∃ v ∈ rightPrefixes b, v ≤ B ∧ a + v ≤ U ∧
+        T < reducedOmegaCost A a * reducedOmegaCost B v) := by
+  have below {a b A B : Surreal.{u}}
+      (ih : ∀ x y : Surreal.{u}, x.birthday + y.birthday < a.birthday + b.birthday →
+        ∀ d : Surreal.{u}, 0 < d → reducedOmegaCost (x + y + d) (x + y) ≤
+          reducedOmegaCost (x + d) x * reducedOmegaCost (y + d) y)
+      (hp : birthdayTruncation (a + b) z.birthday = z)
+      (hpos : ∀ j < z.birthday, ∃ w ∈ rightPrefixes z, j < w.birthday ∧ w ≤ min (A + b) (a + B))
+      (hmax : reducedOmegaCost A a * reducedOmegaCost B b ≤
+        reducedOmegaCost (min (A + b) (a + B)) z)
+      (hdir : ∀ w ∈ rightPrefixes (a + b), ∃ u ∈ rightPrefixes a, u + b ≤ w)
+      (V : Surreal.{u}) (hV : V ∈ rightPrefixes z) (S : NatOrdinal.{u})
+      (hS : S < reducedOmegaCost A a * reducedOmegaCost B b) :
+      ∃ u ∈ rightPrefixes a, u ≤ A ∧ u + b ≤ V ∧
+        S < reducedOmegaCost A u * reducedOmegaCost B b := by
+    obtain ⟨w, hw, hwC, hcost⟩ := retained_rightPrefix_costs_cofinal_of_positions
+      (bot_le.trans_lt (birthday_lt_of_mem_rightPrefixes hV)) hpos S (hS.trans_le hmax)
+    have hmin : min w V ∈ rightPrefixes z :=
+      (min_choice w V).elim (fun e ↦ e.symm ▸ hw) (fun e ↦ e.symm ▸ hV)
+    obtain ⟨u, hu, h⟩ := hdir _ (rightPrefixes_subset_of_birthdayTruncation_eq hp hmin)
+    obtain ⟨huA, hb⟩ := rightPrefix_cost_le_of_add_le ih hu
+      (rightPrefixes_subset_of_birthdayTruncation_eq hp hw) (h.trans (min_le_left _ _)) hwC
+    exact ⟨u, hu, huA, h.trans (min_le_right _ _), hcost.trans_le hb⟩
+  rcases rightPrefixes_add_coinitial a b with h | h
+  · exact Or.inl (below ih hz hcof hH h)
+  · right
+    simpa only [add_comm, mul_comm] using below (a := b) (b := a) (A := B) (B := A)
+      (by simpa only [add_comm] using ih) (by simpa only [add_comm] using hz)
+      (by simpa only [add_comm, min_comm] using hcof)
+      (by simpa only [add_comm, min_comm, mul_comm] using hH)
+      (by simpa only [add_comm] using h)
 
 /-- At equality, a retained addition option has a retained output right prefix strictly below it. -/
 theorem exists_retained_rightPrefix_lt_add_of_eq {a b A B z w : Surreal.{u}}
@@ -217,25 +193,5 @@ theorem exists_retained_rightPrefix_lt_add_of_eq {a b A B z w : Surreal.{u}}
   have hstrict := mul_lt_mul_of_pos_right (reducedOmegaCost_lt_of_mem_rightPrefixes hw hwA)
     (zero_lt_one.trans_le (one_le_reducedOmegaCost B b))
   exact hstrict.not_ge (hH.trans hcost)
-
-/-- The fixed-witness exclusion holds arbitrarily late and strictly below the old cutoff. -/
-theorem exists_later_retained_rightPrefix_lt_add_of_eq {a b A B z w : Surreal.{u}}
-    (hb : b ≤ B)
-    (ih : ∀ x y : Surreal.{u}, x.birthday + y.birthday < a.birthday + b.birthday →
-      ∀ d : Surreal.{u}, 0 < d → reducedOmegaCost (x + y + d) (x + y) ≤
-        reducedOmegaCost (x + d) x * reducedOmegaCost (y + d) y)
-    (hz : birthdayTruncation (a + b) z.birthday = z)
-    (hcof : ∀ c < z.birthday, ∃ v ∈ rightPrefixes z,
-      c < v.birthday ∧ v ≤ min (A + b) (a + B))
-    (hH : reducedOmegaCost A a * reducedOmegaCost B b ≤
-      reducedOmegaCost (min (A + b) (a + B)) z)
-    (hw : w ∈ rightPrefixes a) (hwA : w ≤ A)
-    {c : NatOrdinal.{u}} (hc : c < z.birthday) :
-    ∃ v ∈ rightPrefixes z, c < v.birthday ∧
-      v < min (A + b) (a + B) ∧ v < w + b := by
-  obtain ⟨v, hv, hvC, hvw⟩ :=
-    exists_retained_rightPrefix_lt_add_of_eq hb ih hz hcof hH hw hwA
-  obtain ⟨v', hv', hcv', _, hv'v⟩ := exists_retained_rightPrefix_lt_of_cofinal hcof hv hc
-  exact ⟨v', hv', hcv', hv'v.trans_le hvC, hv'v.trans hvw⟩
 
 end Surreal

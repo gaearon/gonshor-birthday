@@ -96,41 +96,59 @@ theorem reducedOmegaCost_rightPrefix_add_le {a b A B u v : Surreal.{u}}
         (min_le_min le_rfl (add_le_add (mem_rightPrefixes_iff.mp hu).2.le le_rfl))
     _ ≤ _ := h
 
+/-- Any right addition option below a retained canonical right prefix bounds its cost.
+The same comparison shows that the input option is retained at its original cutoff. -/
+theorem rightPrefix_cost_le_of_add_le {a b A B u w : Surreal.{u}}
+    (ih : ∀ x y : Surreal.{u}, x.birthday + y.birthday < a.birthday + b.birthday →
+      ∀ d : Surreal.{u}, 0 < d → reducedOmegaCost (x + y + d) (x + y) ≤
+        reducedOmegaCost (x + d) x * reducedOmegaCost (y + d) y)
+    (hu : u ∈ rightPrefixes a) (hw : w ∈ rightPrefixes (a + b)) (huw : u + b ≤ w)
+    (hwC : w ≤ min (A + b) (a + B)) :
+    u ≤ A ∧ reducedOmegaCost (min (A + b) (a + B)) w ≤
+      reducedOmegaCost A u * reducedOmegaCost B b := by
+  have huA := (add_le_add_iff_right b).mp (huw.trans (hwC.trans (min_le_left _ _)))
+  have hbB := (add_le_add_iff_left a).mp
+    ((mem_rightPrefixes_iff.mp hw).2.le.trans (hwC.trans (min_le_right _ _)))
+  exact ⟨huA, reducedOmegaCost_rightPrefix_add_le hu hw huw
+    ((reducedOmegaCost_add_iff_common_margin u b).mp
+      (ih u b (add_lt_add_of_lt_of_le (birthday_lt_of_mem_rightPrefixes hu) le_rfl)) A B huA hbB)⟩
+
+/-- A retained output prefix is paid by an actual retained prefix in one input direction. -/
+theorem exists_retained_rightPrefix_mul_bound_of_smaller {a b A B v : Surreal.{u}}
+    (ih : ∀ x y : Surreal.{u}, x.birthday + y.birthday < a.birthday + b.birthday →
+      ∀ d : Surreal.{u}, 0 < d → reducedOmegaCost (x + y + d) (x + y) ≤
+        reducedOmegaCost (x + d) x * reducedOmegaCost (y + d) y)
+    (hv : v ∈ rightPrefixes (a + b)) (hvC : v ≤ min (A + b) (a + B)) :
+    (∃ w ∈ rightPrefixes a, w ≤ A ∧
+      reducedOmegaCost (min (A + b) (a + B)) v ≤
+        reducedOmegaCost A w * reducedOmegaCost B b) ∨
+    (∃ w ∈ rightPrefixes b, w ≤ B ∧
+      reducedOmegaCost (min (A + b) (a + B)) v ≤
+        reducedOmegaCost A a * reducedOmegaCost B w) := by
+  rcases exists_rightPrefixes_add_le hv with ⟨u, hu, huv⟩ | ⟨u, hu, huv⟩
+  · exact Or.inl ⟨u, hu, rightPrefix_cost_le_of_add_le ih hu hv huv hvC⟩
+  · right
+    refine ⟨u, hu, ?_⟩
+    simpa only [add_comm, min_comm, mul_comm] using
+      rightPrefix_cost_le_of_add_le (a := b) (b := a) (A := B) (B := A)
+        (by simpa only [add_comm] using ih) hu (by simpa only [add_comm] using hv)
+        (by simpa only [add_comm] using huv) (by simpa only [add_comm, min_comm] using hvC)
+
 /-- Smaller-input estimates bound every retained right prefix of a sum. -/
 theorem reducedOmegaCost_rightPrefix_add_le_of_smaller {a b A B v : Surreal.{u}}
-    (ha : a ≤ A) (hb : b ≤ B)
     (ih : ∀ x y : Surreal.{u}, x.birthday + y.birthday < a.birthday + b.birthday →
       ∀ d : Surreal.{u}, 0 < d → reducedOmegaCost (x + y + d) (x + y) ≤
         reducedOmegaCost (x + d) x * reducedOmegaCost (y + d) y)
     (hv : v ∈ rightPrefixes (a + b)) (hvC : v ≤ min (A + b) (a + B)) :
     reducedOmegaCost (min (A + b) (a + B)) v ≤
       reducedOmegaCost A a * reducedOmegaCost B b := by
-  rcases exists_rightPrefixes_add_le hv with ⟨u, hu, huv⟩ | ⟨u, hu, huv⟩
-  · have huA : u ≤ A := by
-      have h := huv.trans (hvC.trans (min_le_left _ _))
-      simpa only [add_le_add_iff_right] using h
-    have hi := (reducedOmegaCost_add_iff_common_margin u b).mp
-      (ih u b (add_lt_add_of_lt_of_le (birthday_lt_of_mem_rightPrefixes hu) le_rfl))
-      A B huA hb
-    exact (reducedOmegaCost_rightPrefix_add_le hu hv huv hi).trans
-      (mul_le_mul' (reducedOmegaCost_lt_of_mem_rightPrefixes hu huA).le le_rfl)
-  · have huB : u ≤ B := by
-      have h := huv.trans (hvC.trans (min_le_right _ _))
-      simpa only [add_le_add_iff_left] using h
-    have hi := (reducedOmegaCost_add_iff_common_margin u a).mp
-      (ih u a (by
-        simpa only [add_comm] using
-          add_lt_add_of_lt_of_le (birthday_lt_of_mem_rightPrefixes hu)
-            (le_refl a.birthday))) B A huB ha
-    have hv' : v ∈ rightPrefixes (b + a) := by simpa only [add_comm] using hv
-    have huv' : u + a ≤ v := by simpa only [add_comm] using huv
-    have h := (reducedOmegaCost_rightPrefix_add_le hu hv' huv' hi).trans
-      (mul_le_mul' (reducedOmegaCost_lt_of_mem_rightPrefixes hu huB).le le_rfl)
-    simpa only [add_comm, min_comm, mul_comm] using h
+  rcases exists_retained_rightPrefix_mul_bound_of_smaller ih hv hvC with
+    ⟨x, hx, hxA, h⟩ | ⟨y, hy, hyB, h⟩
+  · exact h.trans (mul_le_mul' (reducedOmegaCost_lt_of_mem_rightPrefixes hx hxA).le le_rfl)
+  · exact h.trans (mul_le_mul' le_rfl (reducedOmegaCost_lt_of_mem_rightPrefixes hy hyB).le)
 
 /-- Cofinal retained output minuses close the addition estimate from smaller-input estimates. -/
 theorem reducedOmegaCost_add_le_of_cofinal_rightPrefixes {a b A B : Surreal.{u}}
-    (ha : a ≤ A) (hb : b ≤ B)
     (ih : ∀ x y : Surreal.{u}, x.birthday + y.birthday < a.birthday + b.birthday →
       ∀ d : Surreal.{u}, 0 < d → reducedOmegaCost (x + y + d) (x + y) ≤
         reducedOmegaCost (x + d) x * reducedOmegaCost (y + d) y)
@@ -142,6 +160,6 @@ theorem reducedOmegaCost_add_le_of_cofinal_rightPrefixes {a b A B : Surreal.{u}}
   · simpa only [one_mul] using mul_le_mul' (one_le_reducedOmegaCost A a)
       (one_le_reducedOmegaCost B b)
   · intro v hv hvC
-    exact reducedOmegaCost_rightPrefix_add_le_of_smaller ha hb ih hv hvC
+    exact reducedOmegaCost_rightPrefix_add_le_of_smaller ih hv hvC
 
 end Surreal

@@ -5,7 +5,7 @@ Authors: Dan Abramov
 -/
 module
 
-public import GonshorBirthday.Surreal.Birthday.ReducedCostPure
+public import GonshorBirthday.Surreal.Birthday.ReducedCostCofinality
 
 /-!
 # Cofinality across a genuine sign limit
