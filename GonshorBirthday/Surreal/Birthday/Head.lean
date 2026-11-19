@@ -131,6 +131,59 @@ theorem birthdayTruncation_head_real_mul_wpow_of_prefix (K : Surreal.{u}) (u : S
       Real.toSurreal_sub] at hgap
     nlinarith only [hgap]
 
+/-- On a fixed normal-form head and monomial, the simplicity order on real coefficients
+is exactly their own simplicity order. -/
+theorem birthdayTruncation_head_real_mul_wpow_iff (K s : Surreal.{u})
+    (hK : K.support ⊆ Ioi s) (r t : ℝ) :
+    birthdayTruncation (K + (r : Surreal) * ω^ s) (K + (t : Surreal) * ω^ s).birthday =
+      K + (t : Surreal) * ω^ s ↔
+        birthdayTruncation (r : Surreal.{u}) (t : Surreal).birthday = t := by
+  refine ⟨fun h ↦ ?_, birthdayTruncation_head_real_mul_wpow_of_prefix K s hK⟩
+  let F (c : ℝ) := K + (c : Surreal.{u}) * ω^ s
+  have hF : StrictMono F := fun _ _ h ↦
+    add_lt_add_right (mul_lt_mul_of_pos_right (Real.toSurreal_lt_iff.mpr h) (wpow_pos s)) _
+  have real_prefix (v : Surreal.{u}) (hv : birthdayTruncation (t : Surreal) v.birthday = v) :
+      ∃ c : ℝ, (c : Surreal) = v := hv ▸ birthdayTruncation_real_mem_range_real t v.birthday
+  have hl (v) (hv : v ∈ leftPrefixes (t : Surreal.{u})) : v < (r : Surreal) := by
+    obtain ⟨c, rfl⟩ := real_prefix v (mem_leftPrefixes_iff.mp hv).1
+    have hc : F c ∈ leftPrefixes (F t) := mem_leftPrefixes_iff.mpr
+      ⟨birthdayTruncation_head_real_mul_wpow_of_prefix K s hK (mem_leftPrefixes_iff.mp hv).1,
+        hF (Real.toSurreal_lt_iff.mp (mem_leftPrefixes_iff.mp hv).2)⟩
+    exact Real.toSurreal_lt_iff.mpr (hF.lt_iff_lt.mp
+      (mem_leftPrefixes_iff.mp (leftPrefixes_subset_of_birthdayTruncation_eq h hc)).2)
+  have hr (v) (hv : v ∈ rightPrefixes (t : Surreal.{u})) : (r : Surreal) < v := by
+    obtain ⟨c, rfl⟩ := real_prefix v (mem_rightPrefixes_iff.mp hv).1
+    have hc : F c ∈ rightPrefixes (F t) := mem_rightPrefixes_iff.mpr
+      ⟨birthdayTruncation_head_real_mul_wpow_of_prefix K s hK (mem_rightPrefixes_iff.mp hv).1,
+        hF (Real.toSurreal_lt_iff.mp (mem_rightPrefixes_iff.mp hv).2)⟩
+    exact Real.toSurreal_lt_iff.mpr (hF.lt_iff_lt.mp
+      (mem_rightPrefixes_iff.mp (rightPrefixes_subset_of_birthdayTruncation_eq h hc)).2)
+  have ht := birthdayTruncation_eq_of_btwn (H := leftPrefixes_lt_rightPrefixes (t : Surreal.{u}))
+    hl hr
+  rwa [ofSets_leftPrefixes_rightPrefixes] at ht
+
+/-- Every canonical right gap of a positive unit last term exceeds each real monomial multiple. -/
+theorem real_mul_wpow_lt_rightPrefix_gap_head_add_wpow
+    (K s : Surreal.{u}) (hK : K.support ⊆ Ioi s) (r : ℝ)
+    {w : Surreal.{u}} (hw : w ∈ rightPrefixes (K + ω^ s)) :
+    (r : Surreal) * ω^ s < w - (K + ω^ s) := by
+  let t : ℝ := |r| + 1
+  have ht : 0 < t := by dsimp [t]; positivity
+  have hreal : birthdayTruncation (t : Surreal.{u}) (1 : Surreal).birthday = 1 := by
+    simpa using birthdayTruncation_real_mul_wpow t ht (0 : Surreal.{u})
+  have hp : birthdayTruncation (K + (t : Surreal) * ω^ s) (K + ω^ s).birthday =
+      K + ω^ s := by
+    simpa only [Real.toSurreal_one, one_mul] using
+      birthdayTruncation_head_real_mul_wpow_of_prefix K s hK (r := t) (s := 1)
+        (by simpa only [Real.toSurreal_one] using hreal)
+  have hw' := (mem_rightPrefixes_iff.mp
+    (rightPrefixes_subset_of_birthdayTruncation_eq hp hw)).2
+  have hc : (r : Surreal.{u}) ≤ (|r| : ℝ) := Real.toSurreal_le_iff.mpr (le_abs_self r)
+  have hm := mul_le_mul_of_nonneg_right hc (wpow_nonneg s)
+  dsimp [t] at hw'
+  rw [Real.toSurreal_add, Real.toSurreal_one, add_mul, one_mul] at hw'
+  linarith only [hw', hm]
+
 /-- Fitting finite coefficient cuts remain canonical prefixes after an arbitrary higher head. -/
 theorem birthdayTruncation_head_real_mul_wpow_of_fits (K : Surreal.{u}) (u : Surreal.{u})
     (hK : K.support ⊆ Ioi u) {r : ℝ} {g : IGame.{u}} [Short g] [Numeric g]

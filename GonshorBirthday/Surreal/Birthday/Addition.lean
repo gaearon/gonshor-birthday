@@ -111,6 +111,19 @@ theorem exists_rightPrefixes_add_le {a b v : Surreal.{u}}
   · exact Or.inl ⟨u, hu, hwv⟩
   · exact Or.inr ⟨u, hu, hwv⟩
 
+/-- The right options from one of the two summands are coinitial below all canonical
+right options of the sum. The choice of summand depends only on the two numbers. -/
+theorem rightPrefixes_add_coinitial (a b : Surreal.{u}) :
+    (∀ w ∈ rightPrefixes (a + b), ∃ u ∈ rightPrefixes a, u + b ≤ w) ∨
+    (∀ w ∈ rightPrefixes (a + b), ∃ v ∈ rightPrefixes b, a + v ≤ w) := by
+  by_contra! h
+  obtain ⟨⟨U, hU, hleft⟩, ⟨V, hV, hright⟩⟩ := h
+  have hmin : min U V ∈ rightPrefixes (a + b) :=
+    (min_choice U V).elim (fun e ↦ e.symm ▸ hU) (fun e ↦ e.symm ▸ hV)
+  rcases exists_rightPrefixes_add_le hmin with ⟨u, hu, h⟩ | ⟨v, hv, h⟩
+  · exact (hleft u hu).not_ge (h.trans (min_le_left _ _))
+  · exact (hright v hv).not_ge (h.trans (min_le_right _ _))
+
 /-- Left prefixes of a natural multiple are bounded by a shifted prefix of one summand. -/
 theorem exists_leftPrefixes_natCast_mul_ge (x : Surreal.{u}) (n : ℕ)
     {z : Surreal.{u}} (hz : z ∈ leftPrefixes (((n + 1 : ℕ) : Surreal) * x)) :
@@ -164,6 +177,28 @@ theorem plusCount_add_le (x y : Surreal.{u}) :
         exact (hc.trans (ih _ hv' x v rfl)).trans_lt
           (add_lt_add_of_le_of_lt le_rfl (plusCount_lt_of_mem_leftPrefixes hv))
   exact aux _ x y rfl
+
+/-- At equality in the plus-count bound, a downward perturbation preserving the sum as a
+prefix also preserves the first summand as a prefix. -/
+theorem birthdayTruncation_of_sharp_add {a b x : Surreal.{u}} (hx : x ≤ a)
+    (hs : plusCount (a + b) = plusCount a + plusCount b)
+    (hp : birthdayTruncation (x + b) (a + b).birthday = a + b) :
+    birthdayTruncation x a.birthday = a := by
+  have hL (u : Surreal.{u}) (hu : u ∈ leftPrefixes a) : u < x := by
+    by_contra! hxu
+    have hub := (mem_leftPrefixes_iff.mp hu).2.le
+    have h := birthdayTruncation_eq_of_between (add_le_add_left hxu b) (add_le_add_left hub b)
+      (hp.trans (birthdayTruncation_birthday _).symm)
+    have ht := h.trans hp
+    have hb := birthday_birthdayTruncation_le_birthday (u + b) (a + b).birthday
+    rw [ht] at hb
+    have hcount := plusCount_birthdayTruncation_le (u + b) hb
+    rw [ht, hs] at hcount
+    exact (hcount.trans (plusCount_add_le u b)).not_gt
+      (add_lt_add_of_lt_of_le (plusCount_lt_of_mem_leftPrefixes hu) le_rfl)
+  have h := birthdayTruncation_eq_of_btwn (H := leftPrefixes_lt_rightPrefixes a) hL
+    (fun v hv ↦ hx.trans_lt (mem_rightPrefixes_iff.mp hv).2)
+  rwa [ofSets_leftPrefixes_rightPrefixes] at h
 
 /-- A nonnegative canonical prefix translates past a head with distant right prefixes. -/
 theorem birthdayTruncation_add_left_eq {a b c : Surreal.{u}}

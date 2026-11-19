@@ -11,7 +11,7 @@ import Mathlib.Data.Rat.Cast.CharZero
 import Mathlib.Data.Rat.Cast.Lemmas
 
 /-!
-# Nondyadic coefficient strictness clients
+# Strictness when the coefficient sum lies on a coarser grid
 
 One third and two thirds have dyadic sum but are not dyadic. Their plus-count
 addition is therefore strict after any two higher heads, including heads that
@@ -48,6 +48,21 @@ theorem thirds_strict_plusCount (A B s : Surreal.{u})
       plusCount (B + (((2 / 3 : ℝ) : Surreal)) * ω^ s) := by
   exact plusCount_add_lt_of_nondyadic_last_coefficient A B s hA hB _ _ 1
     (by norm_num) birthday_one_third
+
+/-- Two quarter coefficients add to one half, so one can shorten both inputs on the half grid. -/
+theorem quarters_strict_plusCount (A B s : Surreal.{u})
+    (hA : A.support ⊆ Ioi s) (hB : B.support ⊆ Ioi s) :
+    plusCount ((A + (((1 / 4 : ℝ) : Surreal)) * ω^ s) +
+      (B + (((1 / 4 : ℝ) : Surreal)) * ω^ s)) <
+      plusCount (A + (((1 / 4 : ℝ) : Surreal)) * ω^ s) +
+      plusCount (B + (((1 / 4 : ℝ) : Surreal)) * ω^ s) := by
+  apply (plusCount_add_le _ _).lt_of_ne
+  intro he
+  obtain ⟨q, hden, hq⟩ := exists_coefficient_of_den_le_of_sharp_add A B s hA hB
+    (1 / 4) (1 / 4) Dyadic.half (by norm_num) he
+  have hv : q.toRat = 1 / 4 := (Rat.cast_inj (α := ℝ)).mp (by simpa using hq)
+  have hd : q.den = 4 := by simpa using congrArg Rat.den hv
+  norm_num [hd, Dyadic.num_den] at hden
 
 /-- Cancellation of opposite nondyadic coefficients makes the plus-count bound strict. -/
 example : plusCount ((((1 / 3 : ℝ) : Surreal.{u})) + (((-1 / 3 : ℝ) : Surreal))) <
