@@ -42,15 +42,11 @@ plus blocks by themselves have length $\omega^{p(a)}$. In particular $F_0(a)=\om
 
 We shall prove
 
-```math
-F_d(a+b)\le F_d(a)\otimes F_d(b) \qquad(d\ge0).                         \tag{1}
-```
+(1) $F_d(a+b)\le F_d(a)\otimes F_d(b) \qquad(d\ge0).$
 
 For unequal cutoffs $A\ge a$, $B\ge b$, take $d=\min(A-a,B-b)$. By monotonicity this gives
 
-```math
-D(\min(A+b,a+B),a+b)\le D(A,a)\otimes D(B,b).                            \tag{2}
-```
+(2) $D(\min(A+b,a+B),a+b)\le D(A,a)\otimes D(B,b).$
 
 Two facts about signs will be used. First, $p(a+b)\le p(a)\oplus p(b)$. This follows from
 Gonshor’s theorem that the signs of a sum form a subshuffle of the signs of the summands.
@@ -75,8 +71,8 @@ initial sets is initial.
 [Prefixes of a sum](GonshorBirthday/Surreal/Birthday/PrefixSums.lean)
 
 Suppose $y=H+qM$, with $M=\omega^s$, all exponents of $H$ greater than $s$, and $q$
-dyadic. Take $h=1/\operatorname{den}(q)$. We can choose **both input prefixes to end on
-the same grid** $h\mathbb Z$ at $M$. Indeed, in $x+x'=y$ the coefficients $r,t$ at $s$
+dyadic. Let $D$ be the denominator of $q$ in lowest terms and put $h=1/D$. We can choose
+**both input prefixes to end on the same grid** $h\mathbb Z$ at $M$. Indeed, in $x+x'=y$ the coefficients $r,t$ at $s$
 sum to $q$ and the tails below $s$ cancel. Discard both tails. Round $r$ down to
 $h\lfloor r/h\rfloor$ and $t$ up to the complementary grid point. The rounded numbers
 $A,B$ still sum to $y$. They are prefixes. A grid point with reduced denominator $m$ has
@@ -98,9 +94,7 @@ late in $a$ at cutoff $C$, and $\alpha$ occurs in the Cantor normal form of $D(C
 as an exponent. Suppose also that some $u\in R(a)$ satisfies $u-a\le cM$, with
 $0<c<1$ real. For every prefix $y=H+qM$ of $a+b$ as above,
 
-```math
-p(y)<\alpha\oplus p(b).                                                   \tag{3}
-```
+(3) $p(y)<\alpha\oplus p(b).$
 
 Take the rounded prefixes $A,B$. If $A$ is a proper prefix of $a$, take a retained
 minus after $A$. From there on every retained block has exponent at least $p(A)+1$,
