@@ -42,11 +42,11 @@ plus blocks by themselves have length $\omega^{p(a)}$. In particular $F_0(a)=\om
 
 We shall prove
 
-(1) $F_d(a+b)\le F_d(a)\otimes F_d(b) \qquad(d\ge0).$
+**(1)** $F_d(a+b)\le F_d(a)\otimes F_d(b) \qquad(d\ge0)$.
 
 For unequal cutoffs $A\ge a$, $B\ge b$, take $d=\min(A-a,B-b)$. By monotonicity this gives
 
-(2) $D(\min(A+b,a+B),a+b)\le D(A,a)\otimes D(B,b).$
+**(2)** $D(\min(A+b,a+B),a+b)\le D(A,a)\otimes D(B,b)$.
 
 Two facts about signs will be used. First, $p(a+b)\le p(a)\oplus p(b)$. This follows from
 Gonshor’s theorem that the signs of a sum form a subshuffle of the signs of the summands.
@@ -94,7 +94,7 @@ late in $a$ at cutoff $C$, and $\alpha$ occurs in the Cantor normal form of $D(C
 as an exponent. Suppose also that some $u\in R(a)$ satisfies $u-a\le cM$, with
 $0<c<1$ real. For every prefix $y=H+qM$ of $a+b$ as above,
 
-(3) $p(y)<\alpha\oplus p(b).$
+**(3)** $p(y)<\alpha\oplus p(b)$.
 
 Take the rounded prefixes $A,B$. If $A$ is a proper prefix of $a$, take a retained
 minus after $A$. From there on every retained block has exponent at least $p(A)+1$,
@@ -236,7 +236,7 @@ On the other hand $W$ itself is a right option of $z$. Take $u\in R(a)$ with
 $u+b\le W$. Then
 
 ```math
-u-a\le W-e\le W-y=(t-q)M,\qquad 0<t-q<t-r\le1.
+u-a\le W-e\le W-y=(t-q)M,\qquad 0 \lt t-q \lt t-r\le1.
 ```
 
 Apply (3) to this $y$ at the original cutoff $a+d$. Since $p(b)\le\beta$, we obtain
