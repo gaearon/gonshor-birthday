@@ -13,8 +13,7 @@ public import GonshorBirthday.Surreal.Birthday.Minus
 
 When retained minuses are cofinal and the reduced cost equals its plus-only
 baseline, plus positions must be cofinal too. In particular, such a word has
-no nonempty final constant-sign block. A cofinal family of deleted right
-prefixes also forces every right prefix to be deleted.
+no nonempty final constant-sign block.
 -/
 
 universe u
@@ -95,16 +94,5 @@ theorem no_final_constant_block_of_baseline_cost {C x : Surreal.{u}}
     exact ⟨y, hy, hay⟩
   · exact ne_appendMinuses_of_leftPrefixes_cofinal
       (leftPrefixes_cofinal_of_baseline_cost hbase hcof) z hρ
-
-/-- Deletion of a cofinal family of right prefixes forces deletion of every right prefix. -/
-theorem rightPrefixes_gt_cutoff_of_cofinal_subset {C x : Surreal.{u}}
-    (S : Set Surreal.{u}) (hS : S ⊆ rightPrefixes x)
-    (hcof : ∀ a < x.birthday, ∃ y ∈ S, a < y.birthday)
-    (hdel : ∀ y ∈ S, C < y) : ∀ z ∈ rightPrefixes x, C < z := by
-  intro z hz
-  obtain ⟨y, hy, hzy⟩ := hcof z.birthday (birthday_lt_of_mem_rightPrefixes hz)
-  have hyz := birthdayTruncation_lt hzy (mem_rightPrefixes_iff.mp hz).2
-  rw [(mem_rightPrefixes_iff.mp (hS hy)).1] at hyz
-  exact (hdel y hy).trans hyz
 
 end Surreal

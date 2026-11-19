@@ -212,44 +212,4 @@ theorem fraction_wpow_lt_right_gap_head_sub_wpow {K s w : Surreal.{u}}
     h w (by simpa only [Real.toSurreal_neg, Real.toSurreal_one, neg_one_mul, ← sub_eq_add_neg]
       using hw)
 
-/-- If both signs occur cofinally, a positive lower bound on the right gaps at scale
-`ω^s` puts every right gap above every real fraction of that monomial smaller than one. -/
-theorem fraction_wpow_lt_right_gap_of_both_cofinal {a s : Surreal.{u}} {δ c : ℝ}
-    (hδ : 0 < δ) (hc : c < 1)
-    (hgap : ∀ v ∈ rightPrefixes a, a + (δ : Surreal) * ω^ s < v)
-    (hL : ∀ j < a.birthday, ∃ v ∈ leftPrefixes a, j < v.birthday)
-    (hR : ∀ j < a.birthday, ∃ v ∈ rightPrefixes a, j < v.birthday)
-    {w : Surreal.{u}} (hw : w ∈ rightPrefixes a) : a + (c : Surreal) * ω^ s < w := by
-  by_contra! h
-  let g := (δ : Surreal.{u}) * ω^ s
-  have hg : 0 < g := mul_pos (Real.toSurreal_pos_iff.mpr hδ) (wpow_pos s)
-  have hgs : g.wlog = s := by
-    rw [show g = _ from rfl, wlog_mul (Real.toSurreal_pos_iff.mpr hδ).ne' (wpow_ne_zero s),
-      wlog_realCast, wlog_wpow, zero_add]
-  have hcM : (c : Surreal.{u}) * ω^ s < ω^ s := by
-    simpa only [Real.toSurreal_one, one_mul] using
-      mul_lt_mul_of_pos_right (Real.toSurreal_lt_iff.mpr hc) (wpow_pos s)
-  have hupper : w ≤ a + ((δ⁻¹ : ℝ) : Surreal.{u}) * g := by
-    rw [Real.toSurreal_inv, show (δ : Surreal)⁻¹ * g = ω^ s from
-      inv_mul_cancel_left₀ (Real.toSurreal_pos_iff.mpr hδ).ne' _]
-    exact h.trans (add_le_add le_rfl hcM.le)
-  obtain ⟨r, t, _, _, hminus, ha⟩ :=
-    last_minus_at_scale_of_right_gaps hg hw (fun v hv ↦ (hgap v hv).le) (inv_pos.mpr hδ) hupper hR
-  rw [hgs] at ha
-  let K := a.normalFormTrunc s
-  have hK : K.support ⊆ Ioi s := by rw [support_trunc]; exact inter_subset_right
-  change a = K + (r : Surreal) * ω^ s at ha
-  have ht : t = 0 := by
-    by_contra hn
-    exact not_both_prefixes_cofinal_of_head_real_coefficient_successor K s hK hn
-      (Or.inr hminus) (ha ▸ hL) (ha ▸ hR)
-  subst t
-  have hr : r = -1 := by
-    apply Real.toSurreal_inj.mp
-    rw [hminus, Real.toSurreal_zero, Real.toSurreal_neg, Real.toSurreal_one]
-    symm
-    apply eq_appendMinus_of_birthdayTruncation_eq <;> simp
-  rw [hr, Real.toSurreal_neg, Real.toSurreal_one, neg_one_mul, ← sub_eq_add_neg] at ha
-  exact h.not_gt (ha ▸ fraction_wpow_lt_right_gap_head_sub_wpow hK hc (ha ▸ hw))
-
 end Surreal

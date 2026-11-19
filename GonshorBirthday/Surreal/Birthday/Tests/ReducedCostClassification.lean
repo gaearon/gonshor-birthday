@@ -6,7 +6,6 @@ Authors: Dan Abramov
 module
 
 public import GonshorBirthday.Surreal.Birthday.ReducedCostClassification
-public import GonshorBirthday.Surreal.Birthday.ReducedCostGap
 
 import GonshorBirthday.Surreal.Birthday.Tests.ReducedCostInterval
 import GonshorBirthday.Surreal.Birthday.HeadPerturbation

@@ -106,17 +106,6 @@ theorem omegaExpansionContribution_le_of_embedding (x : Surreal.{u})
   exact (omegaExpansionContribution_le_minus_add_wpow x e).trans
     (add_le_add (NatOrdinal.of.monotone hminus) le_rfl)
 
-/-- Minus-position count and the plus-only baseline bound any selected original positions. -/
-theorem omegaExpansionContribution_le (x : Surreal.{u})
-    (S : Set x.birthday.val.ToType) :
-    NatOrdinal.of (typeLT (Σₗ i : S,
-      (ω^ (plusCount (birthdayTruncation x (NatOrdinal.of i.1.toOrd.1)) + 1)).val.ToType)) ≤
-      NatOrdinal.of ((ω^ (plusCount x + 1)).val *
-        typeLT {i : S | x < birthdayTruncation x (NatOrdinal.of i.1.toOrd.1)}) +
-      ω^ plusCount x :=
-  omegaExpansionContribution_le_of_embedding x
-    (OrderEmbedding.ofStrictMono Subtype.val (fun _ _ h ↦ h))
-
 /-- A suffix of a pure reduced cost has the same order type as the whole cost. -/
 theorem reducedOmegaCost_tail_eq_wpow_of_eq {C x : Surreal.{u}} {p : NatOrdinal.{u}}
     (hcost : reducedOmegaCost C x = ω^ p) (j : reducedOmegaPositions C x) :

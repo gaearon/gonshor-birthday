@@ -148,24 +148,6 @@ theorem exists_rightPrefix_gap_window {e z d : Surreal.{u}}
   have h₂ := le_max_right d (e - z)
   linarith
 
-/-- A retained gap window excludes any coinitial right-prefix family admitting repeated halving. -/
-theorem not_coinitial_halving_rightPrefixes_of_gap_window {e z d : Surreal.{u}}
-    (hz : birthdayTruncation e z.birthday = z)
-    (hdel : ∀ w ∈ rightPrefixes z, z + d < w)
-    (hne : ∃ w ∈ rightPrefixes z, w ≤ e + d)
-    (S : Set Surreal.{u}) (hS : S ⊆ rightPrefixes z)
-    (hcoinitial : ∀ w ∈ rightPrefixes z, ∃ v ∈ S, v ≤ w) :
-    ¬ (∀ v ∈ S, ∃ u ∈ S, 2 * (u - z) < v - z) := by
-  intro hhalf
-  obtain ⟨w, hw, _, hgap, hsum⟩ := exists_rightPrefix_gap_window hz hdel hne
-  obtain ⟨v, hv, hvw⟩ := hcoinitial w hw
-  obtain ⟨u, hu, huv⟩ := hhalf v hv
-  have hdu := hdel u (hS hu)
-  have heu := (mem_rightPrefixes_iff.mp
-    (rightPrefixes_subset_of_birthdayTruncation_eq hz (hS hu))).2
-  have hmax : max d (e - z) < u - z := max_lt (by linarith) (by linarith)
-  linarith
-
 /-- A minimal pure-cost failure has a proper limit prefix with every lowered minus deleted. -/
 theorem exists_deleted_limit_prefix_of_pure_common_margin_failure
     (a b d : Surreal.{u}) (hd : 0 < d)

@@ -26,24 +26,6 @@ universe u
 public noncomputable section
 namespace Surreal
 
-/-- A prefix after every original minus leaves exactly an appended plus block. -/
-theorem eq_appendPluses_of_rightPrefixes_before (x : Surreal.{u}) {c : NatOrdinal.{u}}
-    (hc : c < x.birthday) (hR : ∀ y ∈ rightPrefixes x, y.birthday < c) :
-    x = appendPluses (birthdayTruncation x c) (x.birthday.val - c.val) := by
-  have hzb := birthday_birthdayTruncation x hc.le
-  have hz : birthdayTruncation x (birthdayTruncation x c).birthday = birthdayTruncation x c := by
-    rw [hzb]
-  apply ((appendPluses_eq_iff _ _ _).mpr ?_).symm
-  constructor
-  · rw [hzb, Ordinal.add_sub_cancel_of_le (NatOrdinal.val.monotone hc.le), NatOrdinal.of_val]
-  · apply Set.Subset.antisymm
-    · intro y hy
-      apply mem_rightPrefixes_of_birthdayTruncation_eq_of_birthday_le hz hy
-      · rw [hzb]
-        exact (hR y hy).le
-      · exact birthdayTruncation_lt (hR y hy) (mem_rightPrefixes_iff.mp hy).2
-    · exact rightPrefixes_subset_of_birthdayTruncation_eq hz
-
 /-- The next coefficient prefix needs the last Cantor exponent. One nearby upper
 option gives a strict bound for this prefix at the original input cutoff. -/
 private theorem not_full_prefix_of_cofinal_direction (a b d : Surreal.{u}) (hd : 0 < d)
@@ -98,7 +80,7 @@ private theorem not_full_prefix_of_cofinal_direction (a b d : Surreal.{u}) (hd :
     exact hcheap.ne (hflat L hLmax ⟨w, hw, hwL.trans hLmin⟩)
   have hZ' := hflat _ le_rfl ⟨_, hV', le_rfl⟩
   have hcof' := retained_rightPrefixes_cofinal_of_retained hcofz hV' le_rfl
-  obtain ⟨K, s, r, t, q, hK, hr, hq, hzK, hblock, hy, hcount, _⟩ :=
+  obtain ⟨K, s, r, t, q, hK, hr, hq, hzK, hblock, hy, hcount⟩ :=
     exists_dyadic_prefix_of_final_power hZ' hpre hcof' hd' hdel hV'
   let y := K + (q : Surreal) * ω^ s
   change appendPluses z _ = y at hblock

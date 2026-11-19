@@ -147,8 +147,7 @@ theorem exists_minus_suffix_le_of_coefficient_minus (K s : Surreal.{u}) (hK : K.
     exact ⟨_, hc, minus_suffix_le_of_eq_appendMinuses hblock.symm⟩
 
 /-- If the retained minuses at a last coefficient minus exhaust a power, its exponent
-is at most the plus count at the next coefficient plus. Equality requires the plus
-count of the monomial exponent to be an epsilon number. -/
+is at most the plus count at the next coefficient plus. -/
 theorem pure_cost_exponent_le_next_coefficient (K s : Surreal.{u}) (hK : K.support ⊆ Ioi s)
     {r t : ℝ} (hminus : (r : Surreal.{u}) = appendMinus (t : Surreal.{u}))
     {C : Surreal.{u}} {γ : NatOrdinal.{u}}
@@ -156,43 +155,23 @@ theorem pure_cost_exponent_le_next_coefficient (K s : Surreal.{u}) (hK : K.suppo
     (hcof : ∀ j < (K + (r : Surreal) * ω^ s).birthday,
       ∃ w ∈ rightPrefixes (K + (r : Surreal) * ω^ s), j < w.birthday ∧ w ≤ C) :
     let y := appendPluses (K + (r : Surreal) * ω^ s) (ω^ (plusCount s)).val
-    γ ≤ plusCount y ∧ (plusCount y ≤ γ → ω^ (plusCount s) = plusCount s) := by
-  let z := K + (r : Surreal) * ω^ s
-  let W := K + (t : Surreal) * ω^ s
-  obtain ⟨hmem, hcoin⟩ := rightPrefixes_at_coefficient_minus K s hK hminus
-  have hW : W ∈ rightPrefixes z := by
-    simpa only [sub_zero] using hmem 0 (zero_mem_leftPrefixes (wpow_pos s))
-  have hpos : 0 < (plusCount s).val := by
-    obtain ⟨w, hw, _, _, hwW⟩ := exists_retained_rightPrefix_lt_of_cofinal hcof hW
-      (birthday_lt_of_mem_rightPrefixes hW)
-    obtain ⟨u, hu, huw⟩ := hcoin w hw
-    rcases exists_natCast_mul_wpow_ge_of_mem_leftPrefixes hu with rfl | ⟨v, hv, _⟩
-    · exact (hwW.not_ge (by simpa only [sub_zero] using huw)).elim
-    · exact NatOrdinal.val.strictMono (bot_le.trans_lt (plusCount_lt_of_mem_leftPrefixes hv))
+    γ ≤ plusCount y := by
   obtain ⟨i, hi, hcount⟩ := exists_minus_suffix_le_of_coefficient_minus K s hK hminus (by
     intro j hj
     obtain ⟨w, hw, hjw, _⟩ := hcof j hj
     exact ⟨w, hw, hjw⟩)
   have hbound := pure_reducedOmegaCost_exponent_le_of_minus_suffix hcost hi hcof hcount
-  have hω : Ordinal.omega0 ≤ (ω^ (plusCount s)).val := Ordinal.left_le_opow _ hpos
-  have hpow : (plusCount s).val ≤ (ω^ (plusCount s)).val :=
-    Ordinal.right_le_opow _ Ordinal.one_lt_omega0
+  have h : 1 + (plusCount s).val ≤ Ordinal.omega0 ^ (plusCount s).val := by
+    by_cases hz : (plusCount s).val = 0
+    · simp [hz]
+    · have hω := Ordinal.left_le_opow Ordinal.omega0 (pos_iff_ne_zero.mpr hz)
+      exact ((Ordinal.isNormal_add_right 1).monotone
+        (Ordinal.right_le_opow (plusCount s).val Ordinal.one_lt_omega0)).trans_eq
+        (Ordinal.one_add_of_omega0_le hω)
   simp only [plusCount_appendPluses]
-  constructor
-  · apply hbound.trans
-    apply NatOrdinal.of.monotone
-    rw [add_assoc, ← Ordinal.one_add_of_omega0_le hω]
-    exact (Ordinal.isNormal_add_right _).monotone ((Ordinal.isNormal_add_right 1).monotone hpow)
-  · intro he
-    have h := NatOrdinal.val.monotone (he.trans hbound)
-    simp only [NatOrdinal.val_of, add_assoc, add_le_add_iff_left] at h
-    have hinf : Ordinal.omega0 ≤ (plusCount s).val := by
-      by_contra! hfin
-      obtain ⟨n, hn⟩ := Ordinal.lt_omega0.mp hfin
-      have hnat := Ordinal.natCast_lt_omega0 (1 + n)
-      rw [Nat.cast_add, Nat.cast_one, ← hn] at hnat
-      exact hnat.not_ge (hω.trans h)
-    rw [Ordinal.one_add_of_omega0_le hinf] at h
-    exact NatOrdinal.val.injective (h.antisymm hpow)
+  apply hbound.trans
+  apply NatOrdinal.of.monotone
+  rw [add_assoc]
+  exact (Ordinal.isNormal_add_right _).monotone h
 
 end Surreal
